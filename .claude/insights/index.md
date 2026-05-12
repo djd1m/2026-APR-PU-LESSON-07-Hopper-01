@@ -57,3 +57,31 @@ ADR-5: Partner with licensed Russian insurer (АльфаСтрахование, 
 **References:** docs/ADR.md (ADR-5), docs/Phase0_Discovery_Brief.md (Risk Matrix)
 
 ---
+
+## 2026-05-12 — Monorepo scaffold benefits from 3-agent parallelism
+
+**Tags:** scaffolding, parallel-agents, monorepo
+
+**Problem:**
+Generating 6 packages with 87 files sequentially would take 30+ minutes. Packages have cross-dependencies (shared types → api → bot) but initial scaffolding can be parallelized.
+
+**Solution:**
+Split into 3 agents: (1) shared + db (foundation types), (2) api (backend), (3) bot + web + ml (clients + ML). Agents don't write to overlapping paths. Cross-package imports use @hopperru/shared which is generated first. Total time: ~12 minutes. Commit per logical group for safe recovery.
+
+**References:** /start Phase 2 execution
+
+---
+
+## 2026-05-12 — Rule-based prediction as cold start solution (TRIZ #15 Dynamism)
+
+**Tags:** ml, cold-start, triz, price-prediction
+
+**Problem:**
+Hopper uses 30B+ daily price points for 95% accuracy. We have zero historical data for Russian domestic routes.
+
+**Solution:**
+TRIZ Principle #15 (Dynamism): Phase 1 uses rule-based prediction with seasonal factors, day-of-week patterns, advance purchase curves, and Russian holiday calendar. Expected accuracy ~70%. As data accumulates, Phase 2 ML model (scikit-learn gradient boosting) trains on real data. Phase 3 deep learning (TensorFlow LSTM) when data volume sufficient. Each phase can be deployed independently.
+
+**References:** docs/ADR.md (ADR-3), packages/ml/models/predictor.py, packages/ml/models/rules.py
+
+---
