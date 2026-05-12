@@ -1,0 +1,276 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────────
+
+enum CabinClass {
+  ECONOMY
+  BUSINESS
+}
+
+enum DataSource {
+  API_DIRECT
+  AGGREGATOR
+  SCRAPER
+}
+
+enum BookingType {
+  FLIGHT
+  HOTEL
+  TRAIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  TICKETED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  MIR
+  SBP
+  TELEGRAM
+}
+
+enum FreezeStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  REFUNDED
+}
+
+enum ProtectionType {
+  CANCEL_FOR_ANY_REASON
+  PRICE_DROP
+  FLIGHT_DISRUPTION
+}
+
+enum ProtectionStatus {
+  ACTIVE
+  CLAIMED
+  PAID_OUT
+  EXPIRED
+  VOIDED
+}
+
+enum RecommendedAction {
+  BUY_NOW
+  WAIT
+  INSUFFICIENT_DATA
+}
+
+enum AlertStatus {
+  ACTIVE
+  TRIGGERED
+  EXPIRED
+}
+
+// ──────────────────────────────────────────────
+// Models
+// ──────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  telegram_id  String?   @unique
+  email        String?
+  phone        String?
+  name         String
+  home_airport String    @default("SVO") @db.VarChar(3)
+  preferences  Json      @default("{}")
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+
+  bookings     Booking[]
+  price_freezes PriceFreeze[]
+  price_alerts PriceAlert[]
+
+  @@index([telegram_id])
+  @@index([email])
+  @@index([deleted_at])
+  @@map("users")
+}
+
+model Flight {
+  id              String    @id @default(uuid()) @db.Uuid
+  airline         String    @db.VarChar(3)
+  flight_number   String    @db.VarChar(10)
+  origin          String    @db.VarChar(3)
+  destination     String    @db.VarChar(3)
+  departure_at    DateTime
+  arrival_at      DateTime
+  duration_min    Int
+  cabin_class     CabinClass
+  stops           Int       @default(0)
+  available_seats Int
+  price           Decimal   @db.Decimal(12, 2)
+  currency        String    @default("RUB") @db.VarChar(3)
+  fetched_at      DateTime  @default(now())
+  source          DataSource
+
+  booking_items  BookingItem[]
+  price_freezes  PriceFreeze[]
+
+  @@index([origin, destination, departure_at])
+  @@index([airline])
+  @@index([fetched_at])
+  @@map("flights")
+}
+
+model Booking {
+  id                  String        @id @default(uuid()) @db.Uuid
+  user_id             String        @db.Uuid
+  type                BookingType
+  status              BookingStatus @default(PENDING)
+  total_price         Decimal       @db.Decimal(12, 2)
+  currency            String        @default("RUB") @db.VarChar(3)
+  payment_id          String?
+  payment_method      PaymentMethod?
+  pnr                 String?
+  created_at          DateTime      @default(now())
+  confirmed_at        DateTime?
+  cancelled_at        DateTime?
+  cancellation_reason String?
+
+  user        User          @relation(fields: [user_id], references: [id])
+  items       BookingItem[]
+  passengers  Passenger[]
+  protections Protection[]
+
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("bookings")
+}
+
+model BookingItem {
+  id         String  @id @default(uuid()) @db.Uuid
+  booking_id String  @db.Uuid
+  flight_id  String? @db.Uuid
+  hotel_id   String? @db.Uuid
+  price      Decimal @db.Decimal(12, 2)
+  currency   String  @default("RUB") @db.VarChar(3)
+
+  booking Booking @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  flight  Flight? @relation(fields: [flight_id], references: [id])
+
+  @@index([booking_id])
+  @@map("booking_items")
+}
+
+model Passenger {
+  id              String   @id @default(uuid()) @db.Uuid
+  booking_id      String   @db.Uuid
+  first_name      String
+  last_name       String
+  passport_number String
+  date_of_birth   DateTime @db.Date
+  nationality     String   @db.VarChar(2)
+
+  booking Booking @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+
+  @@index([booking_id])
+  @@map("passengers")
+}
+
+model PriceFreeze {
+  id           String       @id @default(uuid()) @db.Uuid
+  user_id      String       @db.Uuid
+  flight_id    String       @db.Uuid
+  frozen_price Decimal      @db.Decimal(12, 2)
+  fee_paid     Decimal      @db.Decimal(12, 2)
+  status       FreezeStatus @default(ACTIVE)
+  expires_at   DateTime
+  created_at   DateTime     @default(now())
+  used_at      DateTime?
+  booking_id   String?      @db.Uuid
+
+  user   User   @relation(fields: [user_id], references: [id])
+  flight Flight @relation(fields: [flight_id], references: [id])
+
+  @@index([user_id])
+  @@index([status])
+  @@index([expires_at])
+  @@map("price_freezes")
+}
+
+model Protection {
+  id           String           @id @default(uuid()) @db.Uuid
+  booking_id   String           @db.Uuid
+  type         ProtectionType
+  premium_paid Decimal          @db.Decimal(12, 2)
+  status       ProtectionStatus @default(ACTIVE)
+  claim_amount Decimal?         @db.Decimal(12, 2)
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+
+  booking Booking @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+
+  @@index([booking_id])
+  @@index([status])
+  @@map("protections")
+}
+
+model PricePrediction {
+  id                  String            @id @default(uuid()) @db.Uuid
+  origin              String            @db.VarChar(3)
+  destination         String            @db.VarChar(3)
+  departure_date      DateTime          @db.Date
+  predicted_price     Decimal           @db.Decimal(12, 2)
+  confidence          Float
+  recommendation      RecommendedAction
+  predicted_change_pct Float
+  valid_until         DateTime
+  model_version       String
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+
+  @@index([origin, destination, departure_date])
+  @@index([valid_until])
+  @@map("price_predictions")
+}
+
+model PriceAlert {
+  id             String      @id @default(uuid()) @db.Uuid
+  user_id        String      @db.Uuid
+  origin         String      @db.VarChar(3)
+  destination    String      @db.VarChar(3)
+  departure_date DateTime    @db.Date
+  target_price   Decimal     @db.Decimal(12, 2)
+  current_price  Decimal     @db.Decimal(12, 2)
+  status         AlertStatus @default(ACTIVE)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, status])
+  @@index([origin, destination])
+  @@map("price_alerts")
+}
+
+model PriceHistory {
+  id             String   @id @default(uuid()) @db.Uuid
+  origin         String   @db.VarChar(3)
+  destination    String   @db.VarChar(3)
+  departure_date DateTime @db.Date
+  price          Decimal  @db.Decimal(12, 2)
+  airline        String   @db.VarChar(3)
+  observed_at    DateTime @default(now())
+
+  @@index([origin, destination, departure_date])
+  @@index([observed_at])
+  @@map("price_history")
+}
