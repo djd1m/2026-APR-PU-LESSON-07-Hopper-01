@@ -1,0 +1,24 @@
+{
+  "name": "@hopperru/bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HopperRU Telegram Bot — flight search, price predictions, bookings",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.0",
+    "axios": "^1.7.0",
+    "@hopperru/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^20.0.0"
+  }
+}
