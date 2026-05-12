@@ -1,0 +1,30 @@
+{
+  "name": "hopperru",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HopperRU — AI-powered travel booking with fintech protection for Russian market",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,json}\"",
+    "db:migrate": "pnpm --filter @hopperru/db prisma migrate dev",
+    "db:generate": "pnpm --filter @hopperru/db prisma generate",
+    "db:seed": "pnpm --filter @hopperru/db prisma db seed",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
