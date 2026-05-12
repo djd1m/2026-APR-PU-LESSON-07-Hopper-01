@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CJM Prototype: Hopper Clone — 3 Variant Hypotheses</title>
+<style>
+  :root {
+    --blue: #1878EC;
+    --blue-light: #E8F2FF;
+    --blue-dark: #0D4F8B;
+    --cyan: #00BCD4;
+    --cyan-light: #E0F7FA;
+    --teal: #009688;
+    --teal-light: #E0F2F1;
+    --amber: #FF9800;
+    --amber-light: #FFF8E1;
+    --red: #EF5350;
+    --green: #4CAF50;
+    --green-light: #E8F5E9;
+    --gray-50: #FAFAFA;
+    --gray-100: #F5F5F5;
+    --gray-200: #EEEEEE;
+    --gray-300: #E0E0E0;
+    --gray-600: #757575;
+    --gray-800: #424242;
+    --gray-900: #212121;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-lg: 16px;
+    --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ───────────────────────── */
+  .header {
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue), var(--cyan));
+    color: white;
+    padding: 32px 24px 24px;
+    text-align: center;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow-lg);
+  }
+  .header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 0.85rem; opacity: 0.85; }
+  .header .badge {
+    display: inline-block; background: rgba(255,255,255,0.2);
+    border-radius: 20px; padding: 2px 10px; font-size: 0.7rem;
+    margin-top: 6px; backdrop-filter: blur(4px);
+  }
+  .header .sources-note {
+    font-size: 0.7rem; opacity: 0.65; margin-top: 8px;
+  }
+  .header .sources-note a { color: rgba(255,255,255,0.9); }
+
+  /* ── Variant Tabs ─────────────────── */
+  .tabs {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 12px 16px; background: white;
+    box-shadow: var(--shadow-sm); position: sticky; top: 112px; z-index: 99;
+  }
+  .tab {
+    padding: 8px 20px; border-radius: 24px; cursor: pointer;
+    border: 2px solid var(--gray-200); background: white;
+    font-weight: 600; font-size: 0.85rem; transition: var(--transition);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { border-color: var(--blue); color: var(--blue); }
+  .tab.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .tab .emoji { font-size: 1.1rem; }
+
+  /* ── Mode Controls ────────────────── */
+  .mode-bar {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 8px 16px; background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .mode-btn {
+    padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    border: 1px solid var(--gray-300); background: white;
+    font-size: 0.75rem; font-weight: 500; transition: var(--transition);
+  }
+  .mode-btn:hover { background: var(--blue-light); border-color: var(--blue); }
+  .mode-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+  /* ── Variant Panel ────────────────── */
+  .variant-panel { display: none; }
+  .variant-panel.active { display: block; }
+
+  /* ── Screen Cards ─────────────────── */
+  .screens {
+    padding: 16px; max-width: 520px; margin: 0 auto;
+  }
+  .screen-card {
+    background: white; border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md); margin-bottom: 16px;
+    overflow: hidden; transition: var(--transition);
+    border: 1px solid var(--gray-200);
+  }
+  .screen-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .screen-header {
+    padding: 12px 16px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid var(--gray-200);
+    font-weight: 600; font-size: 0.85rem;
+  }
+  .screen-header .stage-badge {
+    font-size: 0.65rem; padding: 2px 8px; border-radius: 10px;
+    font-weight: 500;
+  }
+  .screen-body { padding: 20px 16px; }
+  .screen-body h3 { font-size: 1.1rem; margin-bottom: 8px; }
+  .screen-body p { font-size: 0.85rem; color: var(--gray-600); margin-bottom: 10px; }
+  .screen-body .cta {
+    display: inline-block; padding: 10px 24px; border-radius: 24px;
+    color: white; font-weight: 600; font-size: 0.85rem; text-decoration: none;
+    cursor: pointer; transition: var(--transition);
+  }
+  .screen-body .cta:hover { opacity: 0.9; transform: scale(1.02); }
+  .screen-body .metric {
+    display: flex; gap: 16px; margin: 12px 0;
+  }
+  .screen-body .metric-item {
+    flex: 1; text-align: center; padding: 8px;
+    background: var(--gray-50); border-radius: 8px;
+  }
+  .screen-body .metric-item .num { font-size: 1.2rem; font-weight: 700; }
+  .screen-body .metric-item .lbl { font-size: 0.65rem; color: var(--gray-600); }
+
+  /* ── CJM Overlay ──────────────────── */
+  .cjm-overlay {
+    display: none; background: var(--blue-light); border-radius: 8px;
+    padding: 10px 14px; margin-top: 8px; font-size: 0.75rem;
+    border-left: 3px solid var(--blue);
+  }
+  .cjm-overlay.visible { display: block; }
+  .cjm-overlay dt { font-weight: 600; color: var(--blue-dark); }
+  .cjm-overlay dd { margin: 0 0 6px 0; color: var(--gray-600); }
+
+  /* ── Source Links ──────────────────── */
+  .source-link {
+    font-size: 0.65rem; color: var(--blue); text-decoration: none;
+    border-bottom: 1px dotted var(--blue); transition: var(--transition);
+  }
+  .source-link:hover { color: var(--blue-dark); border-bottom-style: solid; }
+  .sources-block {
+    margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--gray-200);
+    font-size: 0.7rem; color: var(--gray-600);
+  }
+  .sources-block a { color: var(--blue); text-decoration: none; }
+  .sources-block a:hover { text-decoration: underline; }
+
+  /* ── Comparison Table ─────────────── */
+  .comparison { padding: 16px; max-width: 800px; margin: 0 auto; display: none; }
+  .comparison.active { display: block; }
+  .comparison table {
+    width: 100%; border-collapse: collapse; font-size: 0.8rem;
+    background: white; border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .comparison th, .comparison td {
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .comparison th { background: var(--gray-100); font-weight: 600; font-size: 0.75rem; }
+  .comparison td:first-child { font-weight: 600; color: var(--gray-600); white-space: nowrap; }
+
+  /* ── Builder ──────────────────────── */
+  .builder { padding: 16px; max-width: 600px; margin: 0 auto; display: none; }
+  .builder.active { display: block; }
+  .builder-row {
+    background: white; border-radius: var(--radius); padding: 14px;
+    margin-bottom: 10px; box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+  }
+  .builder-row label { font-weight: 600; font-size: 0.8rem; display: block; margin-bottom: 6px; }
+  .builder-options { display: flex; gap: 6px; flex-wrap: wrap; }
+  .builder-opt {
+    padding: 6px 12px; border-radius: 16px; cursor: pointer;
+    border: 1px solid var(--gray-300); background: white;
+    font-size: 0.75rem; transition: var(--transition);
+  }
+  .builder-opt:hover { border-color: var(--blue); }
+  .builder-opt.selected { background: var(--blue); color: white; border-color: var(--blue); }
+
+  /* ── Scoring ──────────────────────── */
+  .scoring { padding: 16px; max-width: 600px; margin: 0 auto; display: none; }
+  .scoring.active { display: block; }
+  .score-card {
+    background: white; border-radius: var(--radius); padding: 16px;
+    margin-bottom: 10px; box-shadow: var(--shadow-sm);
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid var(--gray-200);
+  }
+  .score-card h4 { font-size: 0.9rem; }
+  .score-card .stars { font-size: 1.2rem; letter-spacing: 2px; }
+  .score-card .score-val { font-size: 1.4rem; font-weight: 700; }
+
+  /* ── Lock Result ──────────────────── */
+  .lock-section { padding: 16px; max-width: 500px; margin: 0 auto; text-align: center; }
+  .lock-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px; border-radius: 24px; cursor: pointer;
+    border: none; background: var(--green); color: white;
+    font-weight: 700; font-size: 1rem; transition: var(--transition);
+    box-shadow: var(--shadow-md);
+  }
+  .lock-btn:hover { background: #388E3C; transform: scale(1.05); }
+  .locked-result {
+    display: none; padding: 24px; background: var(--green-light);
+    border-radius: var(--radius-lg); margin: 16px; text-align: center;
+    border: 2px solid var(--green);
+  }
+  .locked-result h3 { color: var(--green); margin-bottom: 8px; }
+
+  /* ── Variant colors ───────────────── */
+  .var-a .screen-header { background: var(--blue-light); color: var(--blue-dark); }
+  .var-a .stage-badge { background: var(--blue); color: white; }
+  .var-a .cta { background: var(--blue); }
+  .var-a .metric-item .num { color: var(--blue); }
+
+  .var-b .screen-header { background: var(--cyan-light); color: #006064; }
+  .var-b .stage-badge { background: var(--cyan); color: white; }
+  .var-b .cta { background: var(--cyan); }
+  .var-b .metric-item .num { color: var(--cyan); }
+
+  .var-c .screen-header { background: var(--teal-light); color: #004D40; }
+  .var-c .stage-badge { background: var(--teal); color: white; }
+  .var-c .cta { background: var(--teal); }
+  .var-c .metric-item .num { color: var(--teal); }
+
+  /* ── Responsive ───────────────────── */
+  @media (max-width: 600px) {
+    .tabs { flex-wrap: wrap; }
+    .comparison table { font-size: 0.7rem; }
+    .comparison th, .comparison td { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
+<div class="header">
+  <h1>Customer Journey Map: Hopper Clone</h1>
+  <p>3 варианта CJM-гипотезы для запуска аналога на российском рынке</p>
+  <span class="badge">DEEP Mode | 2026-05-12 | Travel Tech / OTA</span>
+  <div class="sources-note">
+    Все данные основаны на исследовании M1-M2 с инлайн-ссылками на первоисточники.
+    <a href="https://hopper.com" target="_blank">hopper.com</a> |
+    <a href="https://hts.hopper.com" target="_blank">hts.hopper.com</a> |
+    <a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper Gen Z Research</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ VARIANT TABS ═══════════════════════════ -->
+<div class="tabs" id="tabs">
+  <div class="tab active" data-variant="a" onclick="switchVariant('a')">
+    <span class="emoji">🔮</span> A: Предиктор
+  </div>
+  <div class="tab" data-variant="b" onclick="switchVariant('b')">
+    <span class="emoji">🛡️</span> B: Страховщик
+  </div>
+  <div class="tab" data-variant="c" onclick="switchVariant('c')">
+    <span class="emoji">🏢</span> C: Платформа
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ MODE BAR ═══════════════════════════════ -->
+<div class="mode-bar">
+  <div class="mode-btn active" data-mode="screens" onclick="switchMode('screens')">📱 Экраны</div>
+  <div class="mode-btn" data-mode="compare" onclick="switchMode('compare')">⚖️ Сравнение</div>
+  <div class="mode-btn" data-mode="builder" onclick="switchMode('builder')">🔧 Конфигуратор</div>
+  <div class="mode-btn" data-mode="scoring" onclick="switchMode('scoring')">🏆 Скоринг</div>
+  <div class="mode-btn" data-mode="cjm" onclick="toggleCJM()">📊 CJM</div>
+</div>
+
+<!-- ══════════════════════════════════ VARIANT A: ПРЕДИКТОР ═══════════════════ -->
+<div class="variant-panel active var-a" id="panel-a">
+<div class="screens">
+
+  <!-- Screen 1: Landing -->
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>1. Landing</span>
+      <span class="stage-badge">Awareness → Acquisition</span>
+    </div>
+    <div class="screen-body">
+      <h3>Знай точно, когда покупать билет</h3>
+      <p>AI анализирует 30 млрд ценовых точек ежедневно и предсказывает с точностью 95%, когда цена на ваш рейс будет минимальной.
+        <a href="https://financebuzz.com/hopper-review" target="_blank" class="source-link">[FinanceBuzz]</a>
+      </p>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">95%</div>
+          <div class="lbl">Точность прогноза</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">$50-200</div>
+          <div class="lbl">Экономия на рейс</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">30B+</div>
+          <div class="lbl">Ценовых точек/день</div>
+        </div>
+      </div>
+      <span class="cta">Проверить мой рейс — бесплатно</span>
+      <div class="sources-block">
+        Источники: <a href="https://financebuzz.com/hopper-review" target="_blank">FinanceBuzz 2026 Review</a> |
+        <a href="https://www.builtinboston.com/articles/spotlight-working-at-hopper-engineering-data" target="_blank">BuiltInBoston Engineering</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Acquisition</dd>
+          <dt>Эмоция пользователя:</dt><dd>Любопытство + FOMO ("а вдруг я переплачиваю?")</dd>
+          <dt>Ключевая метрика:</dt><dd>Signup Rate, Search Initiated</dd>
+          <dt>Custdev вопрос:</dt><dd>"Как вы сейчас решаете, когда покупать билет?"</dd>
+          <dt>Триггер входа (M2):</dt><dd>Увидел цену $400 на рейс, который вчера стоил $280</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Onboarding -->
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>2. Onboarding</span>
+      <span class="stage-badge">Activation</span>
+    </div>
+    <div class="screen-body">
+      <h3>Настроим предиктор под вас</h3>
+      <p>3 вопроса для калибровки AI-модели:</p>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.85rem;">
+        <strong>Q1:</strong> Куда летите? <em style="color:var(--gray-600)">(из segment trigger: конкретный маршрут)</em><br>
+        <strong>Q2:</strong> Какой у вас бюджет? <em style="color:var(--gray-600)">(functional job: "не хочу переплатить")</em><br>
+        <strong>Q3:</strong> Насколько гибкие даты? <em style="color:var(--gray-600)">(±3 дня = больше экономии)</em>
+      </div>
+      <p>Стиль: калькулятор-визард с progress bar. Ощущение: "настраиваю финансовый инструмент".</p>
+      <div class="sources-block">
+        Сегмент: "Тревожный экономист" (M2) — 45% базы.
+        <a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper Gen Z Research</a>:
+        88% Gen Z называют цену главным фактором при выборе рейса.
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Activation</dd>
+          <dt>Эмоция:</dt><dd>Надежда ("наконец-то кто-то поможет разобраться")</dd>
+          <dt>Ключевая метрика:</dt><dd>Onboarding Completion Rate (target: >65%)</dd>
+          <dt>Custdev вопрос:</dt><dd>"Сколько времени вы обычно тратите на мониторинг цен?"</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: Aha Moment -->
+  <div class="screen-card" style="border: 2px solid var(--amber);">
+    <div class="screen-header" style="background:var(--amber-light);">
+      <span>3. Aha Moment ⭐</span>
+      <span class="stage-badge" style="background:var(--amber);">Activation → Revenue</span>
+    </div>
+    <div class="screen-body">
+      <h3>📊 Ваш рейс подешевеет через 3 дня на $87</h3>
+      <p>AI-предиктор показывает цветовой календарь маршрута: зелёные дни (дешёво), красные (дорого), + прогнозная кривая на 60 дней.</p>
+      <div class="metric">
+        <div class="metric-item" style="background:var(--green-light);">
+          <div class="num" style="color:var(--green);">WAIT</div>
+          <div class="lbl">Рекомендация AI</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">$87</div>
+          <div class="lbl">Потенциальная экономия</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">92%</div>
+          <div class="lbl">Confidence прогноза</div>
+        </div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--amber);">
+        <strong>Wow-момент:</strong> Пользователь впервые видит КОЛИЧЕСТВЕННЫЙ ответ на вопрос "ждать или покупать?" вместо гадания.
+        <a href="https://financebuzz.com/hopper-review" target="_blank" class="source-link">[FinanceBuzz: "95% accurate up to a year"]</a>
+      </p>
+      <span class="cta" style="background:var(--amber);">🔒 Заморозить цену за ₽2,500</span>
+      <div class="sources-block">
+        Price Freeze: до 21 дня, покрытие разницы до $100. Avg cost $30.
+        <a href="https://media.hopper.com/news/hopper-expands-fintech-across-verticals-offers-flexibility-before-and-during" target="_blank">Hopper Media</a> |
+        <a href="https://hts.hopper.com/" target="_blank">HTS Products</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Activation → Revenue (paywall at peak emotion)</dd>
+          <dt>Эмоция:</dt><dd>WOW + срочность ("если не заморожу — подорожает!")</dd>
+          <dt>Ключевая метрика:</dt><dd>Price Freeze Conversion Rate (Hopper: 30%+ attach rate, <a href="https://hts.hopper.com/" target="_blank">HTS</a>)</dd>
+          <dt>Custdev вопрос:</dt><dd>"Заплатили бы вы ₽2500, чтобы гарантированно зафиксировать текущую цену?"</dd>
+          <dt>Гипотеза:</dt><dd>Paywall сразу после Aha (на эмоциях) даст конверсию 25-35%</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 4: Dashboard -->
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>4. Dashboard</span>
+      <span class="stage-badge">Retention</span>
+    </div>
+    <div class="screen-body">
+      <h3>Мои маршруты — Live Tracker</h3>
+      <p>Отслеживайте несколько маршрутов одновременно. Push-уведомления: "Москва→Стамбул: BUY NOW — цена на минимуме 🟢"</p>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.8rem;">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--gray-200);">
+          <span>✈️ MOW → IST</span>
+          <span style="color:var(--green);font-weight:600;">↓ $45 · BUY NOW</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--gray-200);">
+          <span>✈️ MOW → TBS</span>
+          <span style="color:var(--amber);font-weight:600;">→ $0 · WAIT 5 days</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;">
+          <span>✈️ LED → DXB</span>
+          <span style="color:var(--red);font-weight:600;">↑ $120 · PRICES RISING</span>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">₽12,400</div>
+          <div class="lbl">Суммарная экономия</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">3/5</div>
+          <div class="lbl">Маршрутов в Watch</div>
+        </div>
+      </div>
+      <div class="sources-block">
+        Engagement hook: price change alerts.
+        <a href="https://www.thetraveler.org/hopper-app-review-2025-still-worth-downloading/" target="_blank">TheTraveler 2025</a>:
+        "You can 'watch' trips and get notified when prices drop"
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Retention</dd>
+          <dt>Engagement Hook:</dt><dd>Variable reward (цена может упасть в любой момент → проверяю каждый день)</dd>
+          <dt>Ключевая метрика:</dt><dd>DAU/MAU, Watch List Size, Push Open Rate</dd>
+          <dt>Custdev вопрос:</dt><dd>"Как часто вы проверяете цены после первого поиска?"</dd>
+          <dt>Hopper retention:</dt><dd>50% bookings from returning customers (<a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper Media</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 5: Paywall/Checkout -->
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>5. Checkout + Fintech Upsell</span>
+      <span class="stage-badge">Revenue</span>
+    </div>
+    <div class="screen-body">
+      <h3>AI говорит: сейчас идеальный момент</h3>
+      <p>Бронирование + 3 fintech-продукта на checkout:</p>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.8rem;">
+        <div style="padding:6px 0;border-bottom:1px solid var(--gray-200);">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" checked disabled> <strong>🛡️ Cancel For Any Reason</strong> — ₽2,000
+            <span style="font-size:0.7rem;color:var(--gray-600);">полный возврат до вылета</span>
+          </label>
+        </div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--gray-200);">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" disabled> <strong>📉 Price Drop Protection</strong> — ₽1,500
+            <span style="font-size:0.7rem;color:var(--gray-600);">возврат разницы 10 дней</span>
+          </label>
+        </div>
+        <div style="padding:6px 0;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" disabled> <strong>⚡ Flight Disruption Guarantee</strong> — ₽1,800
+            <span style="font-size:0.7rem;color:var(--gray-600);">перебронирование при задержке 2ч+</span>
+          </label>
+        </div>
+      </div>
+      <p style="font-size:0.75rem;color:var(--gray-600);">
+        Hopper: 30%+ покупателей берут минимум 1 fintech-продукт, в среднем 1.7 на заказ, маржа >50%.
+        <a href="https://hts.hopper.com/" target="_blank" class="source-link">[HTS]</a>
+      </p>
+      <span class="cta">Оплатить ₽24,900</span>
+      <div class="sources-block">
+        <a href="https://techcrunch.com/2022/06/07/hopper-launches-offerings-more-flexibility-before-during-trips/" target="_blank">TechCrunch</a> |
+        <a href="https://hts.hopper.com/" target="_blank">HTS Fintech Products</a> |
+        <a href="https://www.travelweekly.com/Travel-News/Airline-News/Hopper-adds-new-fintech-options" target="_blank">Travel Weekly</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Revenue</dd>
+          <dt>Эмоция:</dt><dd>Контроль ("я защищён от всех рисков")</dd>
+          <dt>Ключевая метрика:</dt><dd>Fintech Attach Rate (target: 30%), ARPU</dd>
+          <dt>Revenue model:</dt><dd>Commission on booking (~$8-15) + fintech products ($25-55 avg, margin >50%)</dd>
+          <dt>Hopper 2024:</dt><dd>70%+ revenue от fintech, НЕ от комиссий (<a href="https://electroiq.com/stats/hopper-statistics/" target="_blank">ElectroIQ</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 6: Invite/Referral -->
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>6. Referral</span>
+      <span class="stage-badge">Referral</span>
+    </div>
+    <div class="screen-body">
+      <h3>Вы сэкономили ₽8,700 — расскажите друзьям</h3>
+      <p>Post-booking: показываем сколько пользователь сэкономил благодаря предиктору. Шеринг в Telegram/WhatsApp с персональной ссылкой.</p>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">₽8,700</div>
+          <div class="lbl">Ваша экономия</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">₽2,000</div>
+          <div class="lbl">Бонус за друга</div>
+        </div>
+      </div>
+      <span class="cta">📤 Поделиться экономией</span>
+      <p style="font-size:0.75rem;color:var(--gray-600);margin-top:8px;">
+        Механика: "Я сэкономил ₽8,700 на перелёте в Стамбул через [App]. Проверь свой рейс 👉"
+      </p>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Referral</dd>
+          <dt>Эмоция:</dt><dd>Гордость ("я smart traveler") — Social Job из M2</dd>
+          <dt>Ключевая метрика:</dt><dd>Referral Rate, Viral Coefficient (k-factor)</dd>
+          <dt>Custdev вопрос:</dt><dd>"Рассказали бы вы другу, если бы AI сэкономил вам ₽8000 на билете?"</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════ VARIANT B: СТРАХОВЩИК ══════════════════ -->
+<div class="variant-panel var-b" id="panel-b">
+<div class="screens">
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>1. Landing</span>
+      <span class="stage-badge">Awareness → Acquisition</span>
+    </div>
+    <div class="screen-body">
+      <h3>Бронируй без страха. Отменяй без потерь.</h3>
+      <p>66% путешественников меняли планы за последний год. С нами — полный возврат при любой отмене, гарантия лучшей цены, и страховка от задержек.
+        <a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank" class="source-link">[Hopper Gen Z Research]</a>
+      </p>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">100%</div>
+          <div class="lbl">Возврат при отмене</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">24ч</div>
+          <div class="lbl">Best Price Guarantee</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">66%</div>
+          <div class="lbl">Меняют планы/год</div>
+        </div>
+      </div>
+      <span class="cta">Найти рейс с гарантией</span>
+      <div class="sources-block">
+        <a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper Gen Z Research</a>:
+        "41% ищут full refund options" |
+        <a href="https://financebuzz.com/hopper-review" target="_blank">FinanceBuzz Review</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Acquisition</dd>
+          <dt>Эмоция:</dt><dd>Облегчение ("наконец-то можно не бояться")</dd>
+          <dt>Target Segment:</dt><dd>Gen Z "Гибкий путешественник" — 30% базы, 18-25 лет, mobile-first</dd>
+          <dt>Custdev:</dt><dd>"Что вас больше всего тревожит при бронировании?"</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>2. Onboarding</span>
+      <span class="stage-badge">Activation</span>
+    </div>
+    <div class="screen-body">
+      <h3>Как часто меняются ваши планы?</h3>
+      <p>Anxiety-based onboarding: определяем уровень "тревоги путешественника"</p>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.85rem;">
+        <strong>Q1:</strong> Как часто вы отменяете поездки? <em style="color:var(--gray-600);">(никогда / иногда / часто)</em><br>
+        <strong>Q2:</strong> Что вас больше всего беспокоит? <em style="color:var(--gray-600);">(цена / отмена / задержка)</em><br>
+        <strong>Q3:</strong> Предпочитаете дебет, BNPL или карту? <em style="color:var(--gray-600);">(42% Gen Z — дебет, <a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank" class="source-link">Hopper</a>)</em>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>AARRR Stage:</dt><dd>Activation</dd>
+          <dt>Insight:</dt><dd>87% Gen Z делают покупки со смартфона — onboarding ТОЛЬКО mobile-first (<a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card" style="border: 2px solid var(--cyan);">
+    <div class="screen-header" style="background:var(--cyan-light);">
+      <span>3. Aha Moment ⭐</span>
+      <span class="stage-badge" style="background:var(--cyan);">Activation</span>
+    </div>
+    <div class="screen-body">
+      <h3>🛡️ Ваш персональный щит путешественника</h3>
+      <p>Визуализация: "Забронируйте Москва→Бали. Если что-то пойдёт не так:"</p>
+      <div style="background:var(--cyan-light);border-radius:8px;padding:12px;margin:8px 0;font-size:0.8rem;">
+        <div style="padding:4px 0;">✅ Передумали ехать → <strong>100% возврат</strong></div>
+        <div style="padding:4px 0;">✅ Цена упала после покупки → <strong>вернём разницу</strong></div>
+        <div style="padding:4px 0;">✅ Рейс задержали на 2ч+ → <strong>перебронируем бесплатно</strong></div>
+        <div style="padding:4px 0;">✅ Нашли дешевле в течение 24ч → <strong>компенсируем</strong></div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--cyan);">
+        <strong>Wow-момент:</strong> Zero-risk booking. Впервые можно бронировать и НЕ тревожиться.
+      </p>
+      <span class="cta">Попробовать бесплатно</span>
+      <div class="sources-block">
+        <a href="https://hts.hopper.com/" target="_blank">HTS Fintech Products</a> |
+        <a href="https://techcrunch.com/2022/06/07/hopper-launches-offerings-more-flexibility-before-during-trips/" target="_blank">TechCrunch</a>:
+        "Hopper added flexibility features during COVID"
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Эмоция:</dt><dd>Безопасность ("я защищён от ВСЕХ сценариев")</dd>
+          <dt>Гипотеза:</dt><dd>Показать все 4 защиты одновременно → conversion выше чем по одной</dd>
+          <dt>Hopper data:</dt><dd>1.7 fintech-продукта на заказ в среднем (<a href="https://hts.hopper.com/" target="_blank">HTS</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>4. Dashboard</span>
+      <span class="stage-badge">Retention</span>
+    </div>
+    <div class="screen-body">
+      <h3>Мои поездки — всё под контролем</h3>
+      <p>Trip timeline: статус каждой защиты в реальном времени. Push при изменении цены или расписания.</p>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.8rem;">
+        <div style="padding:4px 0;border-bottom:1px solid var(--gray-200);">
+          🛡️ Cancel For Any Reason: <strong style="color:var(--green);">Активна до 15.07</strong>
+        </div>
+        <div style="padding:4px 0;border-bottom:1px solid var(--gray-200);">
+          📉 Price Drop: <strong style="color:var(--green);">Мониторинг (осталось 7 дней)</strong>
+        </div>
+        <div style="padding:4px 0;">
+          ⚡ Disruption: <strong style="color:var(--green);">Готова к активации</strong>
+        </div>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Engagement Hook:</dt><dd>Статусы защиты создают повод вернуться ("всё ли активно?")</dd>
+          <dt>Retention driver:</dt><dd>Carrot Cash (кэшбэк за каждое бронирование → next booking)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>5. Checkout</span>
+      <span class="stage-badge">Revenue</span>
+    </div>
+    <div class="screen-body">
+      <h3>Полный пакет защиты — ₽4,300</h3>
+      <p>Bundle discount: все 3 защиты дешевле чем по отдельности. Impulse buy at checkout.</p>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">₽5,300</div>
+          <div class="lbl">По отдельности</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">₽4,300</div>
+          <div class="lbl">Пакет (-19%)</div>
+        </div>
+      </div>
+      <span class="cta">Добавить защиту</span>
+      <div class="sources-block">
+        Hopper: средняя стоимость fintech-продуктов $25-30.
+        <a href="https://financebuzz.com/hopper-review" target="_blank">FinanceBuzz</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Гипотеза:</dt><dd>Bundle pricing (все 3 со скидкой) повысит attach rate с 30% до 45%</dd>
+          <dt>Gen Z payment:</dt><dd>42% дебет, 30% Apple Pay/BNPL — нужна поддержка всех методов (<a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>6. Referral</span>
+      <span class="stage-badge">Referral</span>
+    </div>
+    <div class="screen-body">
+      <h3>Путешествуйте свободно — приглашайте друзей</h3>
+      <p>Post-trip NPS + referral: "Ваша поездка на Бали была полностью защищена. Дайте такую же свободу другу."</p>
+      <span class="cta">🎁 Подарить другу ₽2,000 на защиту</span>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Механика:</dt><dd>Give ₽2000, Get ₽2000 — двусторонний реферал</dd>
+          <dt>Emotional hook:</dt><dd>"Я забочусь о своих друзьях" (Social Job Gen Z)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════ VARIANT C: ПЛАТФОРМА ═══════════════════ -->
+<div class="variant-panel var-c" id="panel-c">
+<div class="screens">
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>1. Landing (B2B)</span>
+      <span class="stage-badge">Awareness</span>
+    </div>
+    <div class="screen-body">
+      <h3>Встройте travel booking в ваше приложение за 2 недели</h3>
+      <p>White-label платформа для банков, авиалиний и финтехов. AI-pricing, fintech protection, полный checkout — всё через API.
+        <a href="https://hts.hopper.com/" target="_blank" class="source-link">[HTS]</a>
+      </p>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">$3B+</div>
+          <div class="lbl">Incremental Bookings/year</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">100M+</div>
+          <div class="lbl">End Consumers reached</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">19+</div>
+          <div class="lbl">Enterprise Partners</div>
+        </div>
+      </div>
+      <span class="cta">Запросить демо</span>
+      <div class="sources-block">
+        HTS accounts for >60% of Hopper's revenue.
+        <a href="https://www.webintravel.com/hopper-doubles-down-on-hts-to-power-banks-and-credit-cards-to-build-new-space-in-travel/" target="_blank">WebInTravel</a> |
+        <a href="https://www.fastcompany.com/91037421/hopper-most-innovative-companies-2024" target="_blank">Fast Company 2024</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Target:</dt><dd>CDO/CPO банков, авиалиний — Segment 3 из M2</dd>
+          <dt>Триггер:</dt><dd>Конкурент запустил travel (Lloyds через HTS → <a href="https://fintech.global/2025/05/30/lloyds-partners-with-hopper-to-unveil-ai-powered-travel-booking-service/" target="_blank">Fintech Global</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>2. Onboarding (B2B)</span>
+      <span class="stage-badge">Activation</span>
+    </div>
+    <div class="screen-body">
+      <h3>Выберите тип интеграции</h3>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.85rem;">
+        <div style="padding:6px 0;border-bottom:1px solid var(--gray-200);">
+          <strong>🏦 Для банков:</strong> Travel Loyalty Portal + rewards integration
+        </div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--gray-200);">
+          <strong>✈️ Для авиалиний:</strong> Fintech ancillaries + AI customer service (HTS Assist)
+        </div>
+        <div style="padding:6px 0;">
+          <strong>🌐 Для OTA/Fintech:</strong> Full white-label platform + dynamic pricing
+        </div>
+      </div>
+      <div class="sources-block">
+        Partners: Capital One, Lloyds, Commonwealth Bank, RBC, Air Canada, Virgin Australia, Frontier, Nubank.
+        <a href="https://hts.hopper.com/" target="_blank">HTS Partner Portfolio</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>B2B Activation:</dt><dd>Self-service demo → sales call → POC in 2 weeks</dd>
+          <dt>Key metric:</dt><dd>Demo → POC conversion rate</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card" style="border: 2px solid var(--teal);">
+    <div class="screen-header" style="background:var(--teal-light);">
+      <span>3. Aha Moment ⭐</span>
+      <span class="stage-badge" style="background:var(--teal);">Activation</span>
+    </div>
+    <div class="screen-body">
+      <h3>Live Demo: ваше приложение с travel за 15 минут</h3>
+      <p>Интерактивный sandbox: партнёр видит свой бренд, свои цвета, своих клиентов — в white-label travel portal. Реальные данные, реальные цены.</p>
+      <div class="metric">
+        <div class="metric-item" style="background:var(--teal-light);">
+          <div class="num" style="color:var(--teal);">2 нед</div>
+          <div class="lbl">POC → Production</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">50%+</div>
+          <div class="lbl">Gross margin fintech</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">30%+</div>
+          <div class="lbl">Attach rate</div>
+        </div>
+      </div>
+      <span class="cta">Запустить sandbox</span>
+      <div class="sources-block">
+        Gold Winner, 2025 Magellan Awards — Travel Services / Technology Solutions.
+        <a href="https://media.hopper.com/news/hopper-named-a-winner-in-the-2025-fintech-breakthrough-awards" target="_blank">Hopper Media</a> |
+        <a href="https://hts.hopper.com/" target="_blank">HTS</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Wow-момент:</dt><dd>"Это УЖЕ выглядит как наш продукт" — брендированный sandbox</dd>
+          <dt>Гипотеза:</dt><dd>Self-service sandbox (без sales call) → конверсия в POC 3x vs traditional demo</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>4. Dashboard (B2B Admin)</span>
+      <span class="stage-badge">Retention</span>
+    </div>
+    <div class="screen-body">
+      <h3>Partner Analytics Dashboard</h3>
+      <p>Real-time метрики: bookings, fintech attach rate, revenue share, customer satisfaction.</p>
+      <div class="metric">
+        <div class="metric-item">
+          <div class="num">$2.4M</div>
+          <div class="lbl">Monthly Bookings</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">34%</div>
+          <div class="lbl">Fintech Attach</div>
+        </div>
+        <div class="metric-item">
+          <div class="num">$180K</div>
+          <div class="lbl">Revenue Share/mo</div>
+        </div>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Retention Hook:</dt><dd>Revenue dashboard → партнёр видит деньги → не хочет уходить</dd>
+          <dt>Reference:</dt><dd>HTS generates $3B+ incremental annual bookings (<a href="https://www.webintravel.com/hopper-doubles-down-on-hts-to-power-banks-and-credit-cards-to-build-new-space-in-travel/" target="_blank">WiT</a>)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>5. Revenue Model</span>
+      <span class="stage-badge">Revenue</span>
+    </div>
+    <div class="screen-body">
+      <h3>Revenue Share + Setup Fee</h3>
+      <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:8px 0;font-size:0.85rem;">
+        <strong>Setup:</strong> $50-200K (зависит от интеграции)<br>
+        <strong>Revenue Share:</strong> 15-25% от fintech products<br>
+        <strong>Minimum Commitment:</strong> 12 months
+      </div>
+      <p style="font-size:0.75rem;color:var(--gray-600);">[H] Конкретные условия HTS NDA — цифры оценочные на основе industry benchmarks</p>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>Pricing Strategy:</dt><dd>Revenue share aligns incentives — чем больше партнёр зарабатывает, тем больше платит</dd>
+          <dt>Hopper revenue:</dt><dd>HTS >60% of $850M = ~$510M+ B2B revenue in 2024</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-card">
+    <div class="screen-header">
+      <span>6. Expansion</span>
+      <span class="stage-badge">Referral</span>
+    </div>
+    <div class="screen-body">
+      <h3>Case Study → Conference → New Partners</h3>
+      <p>B2B referral loop: успешный кейс (Lloyds, RBC) → выступление на Phocuswright → 3 новых партнёра в pipeline.</p>
+      <span class="cta">Стать case study партнёром</span>
+      <div class="sources-block">
+        HTS at <a href="https://www.phocuswrightconference.com/Whos-Coming/Sponsors-Exhibitors/2025/HTS-Hopper-Technology-Solutions" target="_blank">Phocuswright Conference 2026</a> |
+        <a href="https://fintech.global/2025/05/30/lloyds-partners-with-hopper-to-unveil-ai-powered-travel-booking-service/" target="_blank">Lloyds case study</a>
+      </div>
+      <div class="cjm-overlay">
+        <dl>
+          <dt>B2B Referral:</dt><dd>Case studies at industry events → organic lead gen</dd>
+          <dt>Expansion:</dt><dd>Start with flights → add hotels → add cars → full platform upsell</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════ COMPARISON TABLE ═══════════════════════ -->
+<div class="comparison" id="comparison">
+  <h2 style="text-align:center;padding:16px 0;font-size:1.1rem;">⚖️ Сравнение вариантов</h2>
+  <table>
+    <tr>
+      <th></th>
+      <th>🔮 A: Предиктор</th>
+      <th>🛡️ B: Страховщик</th>
+      <th>🏢 C: Платформа</th>
+    </tr>
+    <tr>
+      <td>Aha Moment</td>
+      <td>AI предсказывает: "Wait 3 days, save $87"</td>
+      <td>Zero-risk: 4 вида защиты в 1 клик</td>
+      <td>Branded sandbox: "это уже ваш продукт"</td>
+    </tr>
+    <tr>
+      <td>Entry Hook</td>
+      <td>Functional: "Знай когда покупать"</td>
+      <td>Emotional: "Бронируй без страха"</td>
+      <td>Social: "Первый банк с AI-travel"</td>
+    </tr>
+    <tr>
+      <td>Target Segment</td>
+      <td>Millennials 25-35, $50-80K</td>
+      <td>Gen Z 18-25, mobile-first</td>
+      <td>B2B: Banks, Airlines CDO/CPO</td>
+    </tr>
+    <tr>
+      <td>Paywall Timing</td>
+      <td>Price Freeze at Aha peak emotion</td>
+      <td>Protection bundle at checkout (impulse)</td>
+      <td>Revenue share (ongoing)</td>
+    </tr>
+    <tr>
+      <td>Core Loop</td>
+      <td>Watch → Alert → Buy optimal</td>
+      <td>Book → Protect → Travel freely</td>
+      <td>Integrate → Grow bookings → Revenue</td>
+    </tr>
+    <tr>
+      <td>Revenue Driver</td>
+      <td>Price Freeze + Commission ($30+)</td>
+      <td>Protection bundle ($25-55, >50% margin)</td>
+      <td>Setup fee + Revenue share 15-25%</td>
+    </tr>
+    <tr>
+      <td>Retention Hook</td>
+      <td>Variable reward (price alerts)</td>
+      <td>Active protection status</td>
+      <td>Revenue dashboard</td>
+    </tr>
+    <tr>
+      <td>Referral</td>
+      <td>"I saved ₽8,700" → share savings</td>
+      <td>"Gift ₽2,000 protection" → care</td>
+      <td>Case study → conference → leads</td>
+    </tr>
+    <tr>
+      <td>TAM (RU)</td>
+      <td>~15M active travel searchers</td>
+      <td>~20M Gen Z travelers</td>
+      <td>~50-100 banks + airlines</td>
+    </tr>
+    <tr>
+      <td>Risk</td>
+      <td>Accuracy of predictions for RU carriers</td>
+      <td>Insurance regulation in RU (ЦБ)</td>
+      <td>Enterprise sales cycle 6-18 months</td>
+    </tr>
+    <tr>
+      <td>Hypothesis</td>
+      <td>"Save money" is universal trigger</td>
+      <td>"Zero risk" is more valued than savings</td>
+      <td>B2B is 60%+ revenue from day 1</td>
+    </tr>
+    <tr>
+      <td>Source</td>
+      <td><a href="https://financebuzz.com/hopper-review" target="_blank">FinanceBuzz</a></td>
+      <td><a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper Gen Z</a></td>
+      <td><a href="https://hts.hopper.com/" target="_blank">HTS</a></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════ BUILDER ════════════════════════════════ -->
+<div class="builder" id="builder">
+  <h2 style="text-align:center;padding:16px 0;font-size:1.1rem;">🔧 Конфигуратор: собери свой CJM</h2>
+
+  <div class="builder-row">
+    <label>Landing — Entry Hook:</label>
+    <div class="builder-options">
+      <div class="builder-opt selected" onclick="selectOpt(this)">🔮 A: "Знай когда покупать"</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🛡️ B: "Бронируй без страха"</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🏢 C: "Встрой travel в приложение"</div>
+    </div>
+  </div>
+
+  <div class="builder-row">
+    <label>Onboarding Style:</label>
+    <div class="builder-options">
+      <div class="builder-opt selected" onclick="selectOpt(this)">🔮 A: Calculator wizard</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🛡️ B: Anxiety quiz</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🏢 C: Integration picker</div>
+    </div>
+  </div>
+
+  <div class="builder-row">
+    <label>Aha Moment:</label>
+    <div class="builder-options">
+      <div class="builder-opt" onclick="selectOpt(this)">🔮 A: Price prediction chart</div>
+      <div class="builder-opt selected" onclick="selectOpt(this)">🛡️ B: Zero-risk shield</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🏢 C: Branded sandbox</div>
+    </div>
+  </div>
+
+  <div class="builder-row">
+    <label>Dashboard Hook:</label>
+    <div class="builder-options">
+      <div class="builder-opt selected" onclick="selectOpt(this)">🔮 A: Price alerts tracker</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🛡️ B: Protection status</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🏢 C: Revenue analytics</div>
+    </div>
+  </div>
+
+  <div class="builder-row">
+    <label>Paywall Strategy:</label>
+    <div class="builder-options">
+      <div class="builder-opt" onclick="selectOpt(this)">🔮 A: At Aha peak (₽2,500)</div>
+      <div class="builder-opt selected" onclick="selectOpt(this)">🛡️ B: Bundle at checkout (₽4,300)</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🏢 C: Revenue share (ongoing)</div>
+    </div>
+  </div>
+
+  <div class="builder-row">
+    <label>Referral:</label>
+    <div class="builder-options">
+      <div class="builder-opt selected" onclick="selectOpt(this)">🔮 A: Share savings amount</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🛡️ B: Gift protection credit</div>
+      <div class="builder-opt" onclick="selectOpt(this)">🏢 C: Case study referral</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:16px;">
+    <span class="cta" style="background:var(--blue);display:inline-block;cursor:pointer;" onclick="alert('Ваш кастомный CJM: A-Landing + B-Aha + A-Dashboard + B-Paywall + A-Referral. Зафиксируйте через кнопку Lock!')">👁 Предпросмотр микса</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ SCORING ════════════════════════════════ -->
+<div class="scoring" id="scoring">
+  <h2 style="text-align:center;padding:16px 0;font-size:1.1rem;">🏆 Скоринг вариантов</h2>
+
+  <div class="score-card">
+    <div>
+      <h4>🔮 A: Предиктор</h4>
+      <div style="font-size:0.75rem;color:var(--gray-600);">
+        Viability: ⭐⭐⭐⭐ | Feasibility: ⭐⭐⭐⭐⭐ | Desirability: ⭐⭐⭐⭐
+      </div>
+    </div>
+    <div class="score-val" style="color:var(--blue);">4.3</div>
+  </div>
+
+  <div class="score-card">
+    <div>
+      <h4>🛡️ B: Страховщик</h4>
+      <div style="font-size:0.75rem;color:var(--gray-600);">
+        Viability: ⭐⭐⭐⭐⭐ | Feasibility: ⭐⭐⭐ | Desirability: ⭐⭐⭐⭐⭐
+      </div>
+    </div>
+    <div class="score-val" style="color:var(--cyan);">4.3</div>
+  </div>
+
+  <div class="score-card">
+    <div>
+      <h4>🏢 C: Платформа</h4>
+      <div style="font-size:0.75rem;color:var(--gray-600);">
+        Viability: ⭐⭐⭐⭐⭐ | Feasibility: ⭐⭐ | Desirability: ⭐⭐⭐
+      </div>
+    </div>
+    <div class="score-val" style="color:var(--teal);">3.3</div>
+  </div>
+
+  <div style="background:white;border-radius:var(--radius);padding:14px;margin-top:12px;box-shadow:var(--shadow-sm);font-size:0.8rem;">
+    <strong>Scoring criteria:</strong>
+    <ul style="margin:6px 0 0 16px;color:var(--gray-600);">
+      <li><strong>Viability</strong> — can this make money? (revenue model clarity, margin, market size)</li>
+      <li><strong>Feasibility</strong> — can we build this? (technical complexity, data requirements, regulation)</li>
+      <li><strong>Desirability</strong> — do users want this? (problem severity, willingness to pay, competition)</li>
+    </ul>
+    <p style="margin-top:8px;">
+      <strong>Рекомендация:</strong> Variants A+B tie at 4.3 — рекомендуется гибридный B2C (предиктор + защита), с B2B (C) как Phase 2 growth lever.
+      <a href="https://www.webintravel.com/hopper-doubles-down-on-hts-to-power-banks-and-credit-cards-to-build-new-space-in-travel/" target="_blank" class="source-link">Hopper itself pivoted B2C→B2B for >60% revenue</a>.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ LOCK SECTION ═══════════════════════════ -->
+<div class="lock-section">
+  <button class="lock-btn" onclick="lockVariant()">✅ Зафиксировать winning CJM</button>
+</div>
+
+<div class="locked-result" id="locked-result">
+  <h3>✅ CJM Зафиксирован</h3>
+  <p id="locked-text"></p>
+  <p style="font-size:0.8rem;color:var(--gray-600);margin-top:8px;">
+    → Передаётся в Module 3 (Market & Competition), Module 4 (Business & Finance), Module 5 (Growth Engine), Module 6 (Playbook Synthesis)
+  </p>
+</div>
+
+<!-- ══════════════════════════════════ FOOTER ═════════════════════════════════ -->
+<div style="text-align:center;padding:24px;font-size:0.7rem;color:var(--gray-600);border-top:1px solid var(--gray-200);margin-top:16px;">
+  <strong>Sources & References</strong><br>
+  <a href="https://hopper.com" target="_blank">hopper.com</a> |
+  <a href="https://hts.hopper.com/" target="_blank">HTS</a> |
+  <a href="https://financebuzz.com/hopper-review" target="_blank">FinanceBuzz</a> |
+  <a href="https://media.hopper.com/research/activating-gen-z-and-the-future-of-travel" target="_blank">Hopper Gen Z Research</a> |
+  <a href="https://www.webintravel.com/hopper-doubles-down-on-hts-to-power-banks-and-credit-cards-to-build-new-space-in-travel/" target="_blank">WebInTravel</a> |
+  <a href="https://en.wikipedia.org/wiki/Hopper_(company)" target="_blank">Wikipedia</a> |
+  <a href="https://electroiq.com/stats/hopper-statistics/" target="_blank">ElectroIQ Statistics</a> |
+  <a href="https://www.bloomberg.com/news/articles/2025-01-21/travel-app-hopper-eyes-long-term-ipo-plan-10-billion-valuation" target="_blank">Bloomberg IPO</a> |
+  <a href="https://www.builtinboston.com/articles/spotlight-working-at-hopper-engineering-data" target="_blank">BuiltInBoston</a> |
+  <a href="https://techcrunch.com/2022/06/07/hopper-launches-offerings-more-flexibility-before-during-trips/" target="_blank">TechCrunch</a> |
+  <a href="https://fintech.global/2025/05/30/lloyds-partners-with-hopper-to-unveil-ai-powered-travel-booking-service/" target="_blank">Fintech Global</a> |
+  <a href="https://datappeal.io/the-7-travel-tech-trends-that-will-matter-in-2026/" target="_blank">DataAppeal Trends 2026</a> |
+  <a href="https://coaxsoft.com/blog/tech-travel-trends-innovation" target="_blank">CoaxSoft Travel Tech</a> |
+  <a href="https://www.switchfly.com/blog/2026-travel-technology-trends" target="_blank">Switchfly</a>
+  <br><br>
+  Generated by reverse-engineering-unicorn v2 | DEEP Mode | 2026-05-12
+</div>
+
+<!-- ══════════════════════════════════ SCRIPTS ════════════════════════════════ -->
+<script>
+  let currentVariant = 'a';
+  let currentMode = 'screens';
+  let cjmVisible = false;
+
+  function switchVariant(v) {
+    currentVariant = v;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.tab[data-variant="${v}"]`).classList.add('active');
+    document.querySelectorAll('.variant-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + v).classList.add('active');
+    if (currentMode === 'screens') {
+      document.querySelectorAll('.variant-panel').forEach(p => {
+        if (p.id === 'panel-' + v) p.classList.add('active');
+      });
+    }
+  }
+
+  function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.mode-btn[data-mode="${mode}"]`)?.classList.add('active');
+
+    document.querySelectorAll('.variant-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('comparison').classList.remove('active');
+    document.getElementById('builder').classList.remove('active');
+    document.getElementById('scoring').classList.remove('active');
+
+    if (mode === 'screens') {
+      document.getElementById('panel-' + currentVariant).classList.add('active');
+    } else if (mode === 'compare') {
+      document.getElementById('comparison').classList.add('active');
+    } else if (mode === 'builder') {
+      document.getElementById('builder').classList.add('active');
+    } else if (mode === 'scoring') {
+      document.getElementById('scoring').classList.add('active');
+    }
+  }
+
+  function toggleCJM() {
+    cjmVisible = !cjmVisible;
+    document.querySelectorAll('.cjm-overlay').forEach(o => {
+      o.classList.toggle('visible', cjmVisible);
+    });
+    const btn = document.querySelector('.mode-btn[data-mode="cjm"]');
+    btn.classList.toggle('active', cjmVisible);
+  }
+
+  function selectOpt(el) {
+    const row = el.closest('.builder-options');
+    row.querySelectorAll('.builder-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function lockVariant() {
+    const names = { a: '🔮 A: Предиктор', b: '🛡️ B: Страховщик', c: '🏢 C: Платформа' };
+    const locked = document.getElementById('locked-result');
+    document.getElementById('locked-text').textContent =
+      `Зафиксирован: ${names[currentVariant]} (${currentMode === 'builder' ? 'Custom Mix' : 'Standard'})`;
+    locked.style.display = 'block';
+    locked.scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
