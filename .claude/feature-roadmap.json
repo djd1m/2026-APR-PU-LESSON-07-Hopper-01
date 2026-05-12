@@ -1,0 +1,183 @@
+{
+  "project": "HopperRU",
+  "version": "1.0",
+  "updated": "2026-05-12",
+  "features": [
+    {
+      "id": "search-flights",
+      "title": "Flight Search Engine",
+      "description": "Search flights by route, dates, passengers via airline APIs. Top-20 domestic RU routes.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E1",
+      "stories": ["US-01"],
+      "depends_on": [],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "price-prediction",
+      "title": "AI Price Prediction (Rule-Based Phase 1)",
+      "description": "Buy Now / Wait recommendation with confidence score. Color-coded price calendar.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E1",
+      "stories": ["US-02", "US-03"],
+      "depends_on": ["search-flights"],
+      "estimated_effort": "XL"
+    },
+    {
+      "id": "price-alerts",
+      "title": "Price Alert Subscriptions",
+      "description": "Set target price, get Telegram notification when price drops. Max 10 per user.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E1",
+      "stories": ["US-04"],
+      "depends_on": ["search-flights"],
+      "estimated_effort": "M"
+    },
+    {
+      "id": "booking-engine",
+      "title": "Flight Booking Engine",
+      "description": "Book flights via YooKassa (MIR/SBP). PNR delivery via email + Telegram.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E2",
+      "stories": ["US-05", "US-06", "US-07"],
+      "depends_on": ["search-flights"],
+      "estimated_effort": "XL"
+    },
+    {
+      "id": "price-freeze",
+      "title": "Price Freeze Fintech Product",
+      "description": "Freeze current price for 21 days for fixed fee. Settlement on booking or expiry.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E3",
+      "stories": ["US-08"],
+      "depends_on": ["booking-engine"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "cfar-protection",
+      "title": "Cancel For Any Reason Protection",
+      "description": "100% refund on cancellation. Requires insurance partner integration.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E3",
+      "stories": ["US-09"],
+      "depends_on": ["booking-engine"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "price-drop-protection",
+      "title": "Price Drop Protection",
+      "description": "10-day post-booking monitoring, auto-refund difference if price drops.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E3",
+      "stories": ["US-10"],
+      "depends_on": ["booking-engine"],
+      "estimated_effort": "M"
+    },
+    {
+      "id": "protection-bundle",
+      "title": "Fintech Protection Bundle",
+      "description": "Bundle discount (19%) for CFAR + Price Drop. Checkout upsell UI.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E3",
+      "stories": ["US-12"],
+      "depends_on": ["cfar-protection", "price-drop-protection"],
+      "estimated_effort": "S"
+    },
+    {
+      "id": "telegram-bot",
+      "title": "Telegram Bot (Search + Booking)",
+      "description": "Natural language search, inline results, booking flow, notifications.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E4",
+      "stories": ["US-13", "US-14", "US-15"],
+      "depends_on": ["search-flights", "booking-engine"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "telegram-miniapp",
+      "title": "Telegram Mini App (Calendar + Account)",
+      "description": "Rich UI inside Telegram: price calendar, booking history, savings dashboard.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E4",
+      "stories": ["US-16"],
+      "depends_on": ["telegram-bot"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "auth-system",
+      "title": "Authentication (Telegram OAuth + Phone)",
+      "description": "Telegram login, phone verification, JWT tokens, 152-ФЗ compliant.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E5",
+      "stories": ["US-17"],
+      "depends_on": [],
+      "estimated_effort": "M"
+    },
+    {
+      "id": "user-dashboard",
+      "title": "User Dashboard & Savings",
+      "description": "Booking history, savings tracker, referral link, profile settings.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E5",
+      "stories": ["US-18", "US-19", "US-20"],
+      "depends_on": ["auth-system", "booking-engine"],
+      "estimated_effort": "M"
+    },
+    {
+      "id": "disruption-guarantee",
+      "title": "Flight Disruption Guarantee",
+      "description": "Auto-rebooking on 2h+ delays. Insurance partner required.",
+      "priority": "v1.0",
+      "status": "planned",
+      "epic": "E3",
+      "stories": ["US-11"],
+      "depends_on": ["cfar-protection"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "hotel-search",
+      "title": "Hotel Search & Booking",
+      "description": "Hotel search, booking, price prediction for accommodations.",
+      "priority": "v1.0",
+      "status": "planned",
+      "epic": "E1",
+      "stories": [],
+      "depends_on": ["booking-engine"],
+      "estimated_effort": "XL"
+    },
+    {
+      "id": "train-booking",
+      "title": "Train Ticket Booking (RZD/Sapsan)",
+      "description": "Train search and booking for Russian railways. Price prediction for trains.",
+      "priority": "v1.0",
+      "status": "planned",
+      "epic": "E1",
+      "stories": [],
+      "depends_on": ["booking-engine"],
+      "estimated_effort": "XL"
+    },
+    {
+      "id": "b2b-whitelabel",
+      "title": "B2B White-Label Platform (HTS analog)",
+      "description": "White-label travel portal for banks and fintech partners.",
+      "priority": "v2.0",
+      "status": "planned",
+      "epic": "E6",
+      "stories": [],
+      "depends_on": ["booking-engine", "protection-bundle"],
+      "estimated_effort": "XXL"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+# ─── Dependencies ────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ─── Build output ────────────────────────────────────────────
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# ─── Environment ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── IDE ─────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Docker ──────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Coverage & Testing ─────────────────────────────────────
+coverage/
+.nyc_output/
+htmlcov/
+
+# ─── Logs ────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ─── ML Models (large files) ────────────────────────────────
+packages/ml/models/*.pkl
+packages/ml/models/*.h5
+packages/ml/models/*.pt
+!packages/ml/models/.gitkeep
+
+# ─── Secrets ─────────────────────────────────────────────────
+certs/
+*.pem
+*.key
+
+# ─── Database ────────────────────────────────────────────────
+*.sqlite
+*.db
