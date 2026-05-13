@@ -59,8 +59,7 @@ export default function RootLayout({
                 <a href="/dashboard" className="text-gray-600 hover:text-primary-500 transition-colors">
                   Личный кабинет
                 </a>
-                {/* TODO: Auth button (Telegram Login Widget / email) */}
-                <button className="btn-primary text-sm">Войти</button>
+                <a href="/auth" className="btn-primary text-sm inline-block">Войти</a>
               </div>
             </nav>
           </header>
