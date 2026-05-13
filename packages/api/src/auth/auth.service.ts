@@ -1,27 +1,30 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { createHmac } from 'crypto';
+import { createHash, randomInt } from 'crypto';
 import { PrismaService } from '../common/prisma.service';
-
-export interface TelegramAuthData {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-  auth_date: number;
-  hash: string;
-}
 
 export interface JwtPayload {
   sub: string;
-  telegramId: string;
+  phone: string;
   name: string;
+}
+
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
 }
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -29,91 +32,216 @@ export class AuthService {
   ) {}
 
   /**
-   * Verify Telegram Login Widget data and issue JWT tokens.
+   * Register a new user or re-send verification code to existing user.
+   * Creates user record in DB and sends SMS code (mock for now).
    */
-  async loginViaTelegram(authData: TelegramAuthData) {
-    this.verifyTelegramAuth(authData);
+  async register(phone: string, name: string): Promise<{ message: string }> {
+    const normalizedPhone = this.normalizePhone(phone);
+    const code = this.generateCode();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // TODO: Upsert user in database via Prisma
-    // const user = await this.prisma.user.upsert({
-    //   where: { telegramId: String(authData.id) },
-    //   update: { name: `${authData.first_name} ${authData.last_name || ''}`.trim() },
-    //   create: {
-    //     telegramId: String(authData.id),
-    //     name: `${authData.first_name} ${authData.last_name || ''}`.trim(),
-    //     homeAirport: 'SVO',
-    //   },
-    // });
+    // Upsert: create new user or update code for existing
+    await this.prisma.user.upsert({
+      where: { phone: normalizedPhone },
+      update: {
+        name,
+        verification_code: code,
+        verification_expires: expiresAt,
+      },
+      create: {
+        phone: normalizedPhone,
+        name,
+        home_airport: 'SVO',
+        verification_code: code,
+        verification_expires: expiresAt,
+      },
+    });
 
-    const userId = String(authData.id); // TODO: replace with user.id from DB
-    const payload: JwtPayload = {
-      sub: userId,
-      telegramId: String(authData.id),
-      name: `${authData.first_name} ${authData.last_name || ''}`.trim(),
-    };
+    // Mock SMS sending — in production, integrate with SMS provider (e.g., SMS.ru, SMSC)
+    this.logger.log(
+      `[MOCK SMS] Code ${code} sent to ${normalizedPhone}`,
+    );
+
+    return { message: 'Код подтверждения отправлен' };
+  }
+
+  /**
+   * Verify the SMS code and issue JWT token pair.
+   */
+  async verifyCode(
+    phone: string,
+    code: string,
+  ): Promise<TokenPair & { user: { id: string; name: string; phone: string } }> {
+    const normalizedPhone = this.normalizePhone(phone);
+
+    const user = await this.prisma.user.findUnique({
+      where: { phone: normalizedPhone },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Пользователь не найден. Сначала зарегистрируйтесь.');
+    }
+
+    if (!user.verification_code || !user.verification_expires) {
+      throw new BadRequestException('Код не запрошен. Запросите новый код.');
+    }
+
+    if (new Date() > user.verification_expires) {
+      throw new BadRequestException('Код истёк. Запросите новый код.');
+    }
+
+    if (user.verification_code !== code) {
+      throw new UnauthorizedException('Неверный код подтверждения');
+    }
+
+    // Clear verification code after successful use
+    const tokens = await this.issueTokens(user.id, normalizedPhone, user.name);
+
+    // Store hashed refresh token and clear verification code
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verification_code: null,
+        verification_expires: null,
+        refresh_token_hash: this.hashToken(tokens.refreshToken),
+      },
+    });
 
     return {
-      access_token: this.jwtService.sign(payload),
-      refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      ...tokens,
       user: {
-        id: userId,
-        name: payload.name,
-        telegram_id: String(authData.id),
+        id: user.id,
+        name: user.name,
+        phone: normalizedPhone,
       },
     };
   }
 
   /**
-   * Refresh an expired access token using a valid refresh token.
+   * Validate refresh token and issue a new token pair.
    */
-  async refreshToken(refreshToken: string) {
+  async refreshToken(refreshToken: string): Promise<TokenPair> {
+    let payload: JwtPayload;
     try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken);
-      const newPayload: JwtPayload = {
-        sub: payload.sub,
-        telegramId: payload.telegramId,
-        name: payload.name,
-      };
-      return {
-        access_token: this.jwtService.sign(newPayload),
-        refresh_token: this.jwtService.sign(newPayload, { expiresIn: '7d' }),
-      };
+      payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+        secret: this.getRefreshSecret(),
+      });
     } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Невалидный или истёкший refresh token');
     }
+
+    // Verify the refresh token hash matches what's stored in DB
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+
+    if (!user || !user.refresh_token_hash) {
+      throw new UnauthorizedException('Пользователь не найден или сессия завершена');
+    }
+
+    const tokenHash = this.hashToken(refreshToken);
+    if (user.refresh_token_hash !== tokenHash) {
+      // Possible token reuse — invalidate all sessions
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { refresh_token_hash: null },
+      });
+      throw new UnauthorizedException('Refresh token был использован повторно. Войдите заново.');
+    }
+
+    // Issue new pair and rotate refresh token
+    const tokens = await this.issueTokens(user.id, user.phone!, user.name);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refresh_token_hash: this.hashToken(tokens.refreshToken) },
+    });
+
+    return tokens;
   }
 
   /**
-   * Verify Telegram Login Widget hash per Telegram docs:
-   * https://core.telegram.org/widgets/login#checking-authorization
+   * Fetch user from DB by ID. Used by the JWT guard to populate request.user.
    */
-  private verifyTelegramAuth(authData: TelegramAuthData): void {
-    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN', '');
+  async validateUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        phone: true,
+        email: true,
+        name: true,
+        home_airport: true,
+        preferences: true,
+        created_at: true,
+      },
+    });
 
-    // Check auth_date is not too old (allow 1 day)
-    const authAge = Math.floor(Date.now() / 1000) - authData.auth_date;
-    if (authAge > 86400) {
-      throw new UnauthorizedException('Telegram auth data expired');
+    if (!user) {
+      throw new UnauthorizedException('Пользователь не найден');
     }
 
-    // Build check string
-    const { hash, ...data } = authData;
-    const checkString = Object.keys(data)
-      .sort()
-      .map((key) => `${key}=${data[key as keyof typeof data]}`)
-      .join('\n');
+    return user;
+  }
 
-    // Secret key = SHA256(bot_token)
-    const secretKey = createHmac('sha256', 'WebAppData')
-      .update(botToken)
-      .digest();
+  // ─── Private helpers ───────────────────────────────────────
 
-    const computedHash = createHmac('sha256', secretKey)
-      .update(checkString)
-      .digest('hex');
+  private async issueTokens(
+    userId: string,
+    phone: string,
+    name: string,
+  ): Promise<TokenPair> {
+    const payload: JwtPayload = {
+      sub: userId,
+      phone,
+      name,
+    };
 
-    if (computedHash !== hash) {
-      throw new UnauthorizedException('Invalid Telegram auth hash');
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.getAccessSecret(),
+      expiresIn: '15m',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.getRefreshSecret(),
+      expiresIn: '7d',
+    });
+
+    return { accessToken, refreshToken };
+  }
+
+  private generateCode(): string {
+    // 6-digit numeric code
+    return String(randomInt(100000, 999999));
+  }
+
+  private normalizePhone(phone: string): string {
+    // Strip everything except digits, ensure +7 prefix for Russian numbers
+    const digits = phone.replace(/\D/g, '');
+    if (digits.startsWith('8') && digits.length === 11) {
+      return `+7${digits.slice(1)}`;
     }
+    if (digits.startsWith('7') && digits.length === 11) {
+      return `+${digits}`;
+    }
+    if (digits.startsWith('9') && digits.length === 10) {
+      return `+7${digits}`;
+    }
+    return `+${digits}`;
+  }
+
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private getAccessSecret(): string {
+    return this.configService.get<string>('JWT_SECRET', 'dev-secret-change-me');
+  }
+
+  private getRefreshSecret(): string {
+    return this.configService.get<string>(
+      'JWT_REFRESH_SECRET',
+      'dev-refresh-secret-change-me',
+    );
   }
 }

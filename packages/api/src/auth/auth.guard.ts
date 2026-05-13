@@ -21,7 +21,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException('Missing authorization token');
+      throw new UnauthorizedException('Отсутствует токен авторизации');
     }
 
     try {
@@ -33,7 +33,7 @@ export class JwtAuthGuard implements CanActivate {
       });
       (request as Request & { user: JwtPayload }).user = payload;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Невалидный или истёкший токен');
     }
 
     return true;
