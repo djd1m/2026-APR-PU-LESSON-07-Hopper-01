@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,8 +29,8 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new booking' })
-  @ApiCreatedResponse({ description: 'Booking confirmed' })
+  @ApiOperation({ summary: 'Create a new booking with passengers and payment' })
+  @ApiCreatedResponse({ description: 'Booking confirmed with PNR' })
   async createBooking(
     @Req() req: Request & { user: { sub: string } },
     @Body() dto: CreateBookingDto,
@@ -39,29 +40,29 @@ export class BookingController {
 
   @Get()
   @ApiOperation({ summary: 'List all bookings for the authenticated user' })
-  @ApiOkResponse({ description: 'List of bookings' })
+  @ApiOkResponse({ description: 'List of bookings with flights and passengers' })
   async listBookings(@Req() req: Request & { user: { sub: string } }) {
-    return this.bookingService.listBookings(req.user.sub);
+    return this.bookingService.getBookings(req.user.sub);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single booking by ID' })
+  @ApiOperation({ summary: 'Get a single booking by ID with full details' })
   @ApiParam({ name: 'id', description: 'Booking UUID' })
-  @ApiOkResponse({ description: 'Booking details with protections' })
+  @ApiOkResponse({ description: 'Booking details with protections, passengers, flights' })
   async getBooking(
     @Req() req: Request & { user: { sub: string } },
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.bookingService.getBooking(req.user.sub, id);
+    return this.bookingService.getBookingById(req.user.sub, id);
   }
 
   @Post(':id/cancel')
-  @ApiOperation({ summary: 'Cancel a booking' })
+  @ApiOperation({ summary: 'Cancel a booking with CFAR or standard refund' })
   @ApiParam({ name: 'id', description: 'Booking UUID' })
-  @ApiOkResponse({ description: 'Booking cancelled' })
+  @ApiOkResponse({ description: 'Booking cancelled with refund details' })
   async cancelBooking(
     @Req() req: Request & { user: { sub: string } },
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CancelBookingDto,
   ) {
     return this.bookingService.cancelBooking(req.user.sub, id, dto.reason);
