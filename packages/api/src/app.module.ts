@@ -10,6 +10,7 @@ import { BookingModule } from './booking/booking.module';
 import { FintechModule } from './fintech/fintech.module';
 import { UserModule } from './user/user.module';
 import { NotificationModule } from './notification/notification.module';
+import { B2BModule } from './b2b/b2b.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { NotificationModule } from './notification/notification.module';
     FintechModule,
     UserModule,
     NotificationModule,
+    B2BModule,
   ],
 })
 export class AppModule {}
