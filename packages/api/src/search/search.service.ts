@@ -118,7 +118,7 @@ export class SearchService {
           flights,
           metadata: { total: flights.length, cached: false, search_time_ms: Date.now() - startTime },
         };
-        await this.redis.setex(cacheKey, 300, JSON.stringify(result)).catch(() => {});
+        await this.redis.setex(cacheKey, 1800, JSON.stringify(result)).catch(() => {});
         return result;
       }
       this.logger.warn('Amadeus returned 0 results, trying Travelpayouts...');
@@ -175,7 +175,7 @@ export class SearchService {
     };
 
     // Cache for 5 minutes
-    await this.redis.setex(cacheKey, 300, JSON.stringify(result)).catch((err) => {
+    await this.redis.setex(cacheKey, 1800, JSON.stringify(result)).catch((err) => {
       this.logger.warn(`Failed to cache search result: ${err.message}`);
     });
 

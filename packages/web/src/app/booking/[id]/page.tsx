@@ -97,8 +97,14 @@ export default function BookingPage() {
         method: 'POST',
         body: JSON.stringify(payload),
       }),
-    onSuccess: (data: BookingResponse) => {
-      setBookingResult(data);
+    onSuccess: (data: any) => {
+      const booking = data.booking || data;
+      // If YooKassa returned a payment URL, redirect to it
+      if (booking.payment_url) {
+        window.location.href = booking.payment_url;
+        return;
+      }
+      setBookingResult(booking);
     },
   });
 
