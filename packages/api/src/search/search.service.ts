@@ -105,16 +105,29 @@ export class SearchService {
         dto.departure_date,
         dto.passengers || 1,
       );
+
+      // Travelpayouts Data API returns only cheapest price per route.
+      // Supplement with mock flights anchored to the real price for realistic variety.
+      const mockFlights = this.generateMockFlights(
+        dto.origin, dto.destination, dto.departure_date,
+        dto.cabin_class || 'economy', dto.passengers || 1,
+      );
+
       if (tpFlights.length > 0) {
-        flights = tpFlights;
-        source = 'travelpayouts';
-        this.logger.log(`Using Travelpayouts data: ${flights.length} real flights`);
+        // Use real price as anchor — adjust mock prices around it
+        const realPrice = tpFlights[0].price;
+        const adjustedMocks = mockFlights.map((f: any) => ({
+          ...f,
+          price: Math.round(realPrice * (0.85 + Math.random() * 0.5)), // ±30% around real price
+          source: 'estimated',
+        }));
+        flights = [...tpFlights, ...adjustedMocks];
+        source = 'travelpayouts+estimated';
+        this.logger.log(`Travelpayouts: 1 real + ${adjustedMocks.length} estimated flights`);
       } else {
-        this.logger.warn(`Travelpayouts returned 0 results, falling back to mock`);
-        flights = this.generateMockFlights(
-          dto.origin, dto.destination, dto.departure_date,
-          dto.cabin_class || 'economy', dto.passengers || 1,
-        );
+        flights = mockFlights;
+        source = 'mock';
+        this.logger.warn(`Travelpayouts returned 0 results, using mock data`);
       }
     } else {
       flights = this.generateMockFlights(
