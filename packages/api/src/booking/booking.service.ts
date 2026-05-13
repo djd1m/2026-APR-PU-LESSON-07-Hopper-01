@@ -381,16 +381,16 @@ export class BookingService {
       );
     }
 
-    return {
-      booking: {
-        id: booking.id,
-        status: booking.status.toLowerCase(),
-        pnr: booking.pnr,
-        total_price: {
-          amount: Number(booking.total_price),
-          currency: booking.currency,
-        },
-        payment_method: booking.payment_method?.toLowerCase() ?? null,
+    const resp: any = {
+      id: booking.id,
+      status: booking.status.toLowerCase(),
+      pnr: booking.pnr,
+      payment_url: null as string | null,
+      total_price: {
+        amount: Number(booking.total_price),
+        currency: booking.currency,
+      },
+      payment_method: booking.payment_method?.toLowerCase() ?? null,
         flights: booking.items
           .filter((item) => item.flight_id)
           .map((item) => {
@@ -429,8 +429,21 @@ export class BookingService {
         confirmed_at: booking.confirmed_at?.toISOString() ?? null,
         cancelled_at: booking.cancelled_at?.toISOString() ?? null,
         cancellation_reason: booking.cancellation_reason,
-      },
     };
+
+    // For pending bookings — fetch payment URL from YooKassa
+    if (booking.status === 'PENDING' && booking.payment_id) {
+      try {
+        const payment = await this.yookassa.getPayment(booking.payment_id);
+        if (payment.confirmation_url) {
+          resp.payment_url = payment.confirmation_url;
+        }
+      } catch (err) {
+        this.logger.warn(`Failed to get payment URL: ${err.message}`);
+      }
+    }
+
+    return { booking: resp };
   }
 
   /**
