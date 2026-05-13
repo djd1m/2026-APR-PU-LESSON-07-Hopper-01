@@ -35,7 +35,11 @@ function DashboardContent() {
       ]);
       return {
         bookings: [],
-        total_savings: savings.status === 'fulfilled' ? (savings.value as any).total_savings || 0 : 0,
+        total_savings: savings.status === 'fulfilled'
+          ? (typeof (savings.value as any)?.total_savings === 'object'
+              ? (savings.value as any).total_savings?.amount || 0
+              : (savings.value as any)?.total_savings || 0)
+          : 0,
         alerts: [],
         referral_code: '',
       } as unknown as DashboardData;

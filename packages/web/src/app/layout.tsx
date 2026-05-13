@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useServiceWorker } from '../hooks/useServiceWorker';
 import { InstallPrompt } from '../components/InstallPrompt';
+import AuthButton from '../components/AuthButton';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
@@ -59,7 +60,7 @@ export default function RootLayout({
                 <a href="/dashboard" className="text-gray-600 hover:text-primary-500 transition-colors">
                   Личный кабинет
                 </a>
-                <a href="/auth" className="btn-primary text-sm inline-block">Войти</a>
+                <AuthButton />
               </div>
             </nav>
           </header>
