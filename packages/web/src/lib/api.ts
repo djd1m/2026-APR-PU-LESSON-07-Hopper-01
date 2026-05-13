@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://212.192.0.33:9100/api';
 
 /**
  * Typed fetch wrapper for internal API calls.

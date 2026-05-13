@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
+import AuthGuard from '@/components/AuthGuard';
 
 interface DashboardData {
   bookings: {
@@ -24,8 +25,7 @@ interface DashboardData {
   referral_count: number;
 }
 
-export default function DashboardPage() {
-  // TODO: Get user ID from auth context
+function DashboardContent() {
   const userId = 'current';
 
   const { data, isLoading } = useQuery({
@@ -182,4 +182,12 @@ function translateStatus(status: string): string {
     CANCELLED: 'Отменено',
   };
   return map[status] || status;
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
+  );
 }
