@@ -1,6 +1,6 @@
 # HopperRU
 
-AI-powered travel booking platform with fintech protection for the Russian market. HopperRU predicts optimal ticket purchase timing, freezes prices for up to 21 days, and offers full refund protection on any cancellation -- all accessible via Telegram bot and web app. Built on the Hopper model ($850M revenue, 70%+ from fintech products), adapted for Russian infrastructure: MIR/SBP payments via YooKassa, 152-FZ data compliance, and domestic airline coverage.
+AI-powered travel booking platform with fintech protection for the Russian market. HopperRU predicts optimal ticket purchase timing, freezes prices for up to 21 days, and offers full refund protection on any cancellation -- Web-first with PWA mobile experience, Telegram bot (optional, for VPN users), and VK Mini App for social distribution. Built on the Hopper model ($850M revenue, 70%+ from fintech products), adapted for Russian infrastructure: MIR/SBP payments via YooKassa, 152-FZ data compliance, and domestic airline coverage.
 
 ## Quick Start
 
@@ -16,8 +16,8 @@ The API is available at `http://localhost:3000`, the web app at `http://localhos
 
 ```
                     +-------------------+
-                    |    Clients        |
-                    |  Web    Telegram  |
+                    |    Clients              |
+                    |  Web+PWA  TgBot*  VK    |
                     +--------+----------+
                              |
                     +--------v----------+
@@ -61,7 +61,9 @@ Pattern: **Distributed Monolith** in a monorepo. All services deployed as Docker
 |-------|-----------|---------|
 | Backend API | NestJS (TypeScript) | REST API, business logic, auth |
 | Frontend | Next.js 15 (React) | SSR web application |
-| Telegram Bot | telegraf.js | Telegram-native booking interface |
+| PWA | Service Worker + Web Push | Offline support, push notifications, home screen install |
+| Telegram Bot | telegraf.js | Optional booking interface (VPN users) |
+| VK Mini App | VK Mini Apps SDK | Social distribution (100M+ RU users) |
 | ML Service | FastAPI (Python) + scikit-learn | Price prediction engine |
 | Primary DB | PostgreSQL 16 | Relational data, JSONB, transactions |
 | Cache | Redis 7 | Search cache, sessions, rate limiting |
@@ -187,7 +189,7 @@ Both environments run on Russian-hosted VPS (Selectel/Yandex Cloud) for 152-FZ c
 - ClickHouse for analytics (optional for MVP)
 - Domain with SSL certificate (Let's Encrypt)
 - YooKassa merchant account (for payments)
-- Telegram bot registered via @BotFather
+- Telegram bot registered via @BotFather (optional, for VPN users)
 
 ## Key Features
 
@@ -201,7 +203,10 @@ Both environments run on Russian-hosted VPS (Selectel/Yandex Cloud) for 152-FZ c
 | Flight Booking | End-to-end booking with MIR/SBP | MVP |
 | Cancel For Any Reason | 100% refund via insurance partner | MVP |
 | Price Drop Protection | Auto-refund if price drops after booking | v1.0 |
-| Telegram Bot | Full booking flow in Telegram | MVP |
+| PWA Mobile | Offline support, push, home screen install | MVP |
+| Web Push | Browser push notifications for alerts | MVP |
+| Telegram Bot | Full booking flow in Telegram (optional) | v1.0 |
+| VK Mini App | Social distribution via VK | v1.0 |
 | B2B SDK | White-label for banks/fintechs | v2.0 |
 
 ## Contributing

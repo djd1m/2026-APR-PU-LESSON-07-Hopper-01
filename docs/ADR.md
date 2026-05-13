@@ -219,3 +219,45 @@ We adopt the **Insurance Partner** model. We will partner with a licensed Russia
 - Limited ability to innovate on product terms (e.g., custom cancellation windows)
 - Revenue share terms may worsen as partner gains leverage (mitigate: multi-year contract with fixed terms)
 - Long-term strategy: evaluate self-insurance (ЦБ license) at Series A stage when volume justifies the RUB 300M+ capital requirement
+
+---
+
+## ADR-6: Web-First over Telegram-First (Telegram blocked April 2026)
+
+**Status:** Accepted
+
+### Context
+
+Roskomnadzor blocked Telegram in Russia in April 2026. The original distribution strategy (ADR-2) chose Telegram-first because of 90M+ monthly active users in Russia, zero-install access, viral sharing mechanics, and native payment integration via YooKassa. With the block in effect, approximately 65M Russian users still access Telegram via VPN, but it is no longer a reliable primary distribution channel.
+
+The web app (Next.js) was originally a secondary channel for complex flows. With Telegram blocked, it must become the primary interface. Additionally, VK (VKontakte) has 100M+ Russian users and is NOT blocked, making it a viable alternative social distribution channel via VK Mini Apps.
+
+### Decision
+
+We pivot to a **Web-first + PWA** distribution strategy:
+
+1. **Web App (Next.js) = PRIMARY interface** for all users (no VPN required)
+2. **PWA (Progressive Web App)** replaces Telegram Mini App for mobile experience — offline support, push notifications, home screen install
+3. **Web Push notifications** replace Telegram notifications for price alerts and booking updates
+4. **Telegram Bot = OPTIONAL** for the ~65M users who still access via VPN
+5. **VK Mini App = NEW** alternative social distribution channel (VK has 100M+ Russian users and is not blocked)
+
+This decision supersedes ADR-2's "Telegram-first" conclusion. ADR-2 remains valid in its analysis but its primary recommendation is now overridden.
+
+### Consequences
+
+**Positive:**
+- Broader reach: no VPN needed, accessible to all Russian internet users
+- Better SEO: web-first enables organic search traffic from Yandex and Google
+- PWA provides app-like experience: offline support, push notifications, home screen install
+- VK Mini App taps into 100M+ Russian users for social distribution (sharing deals in VK groups)
+- No platform dependency risk: web is an open standard
+- Web Push notifications have comparable engagement to Telegram messages
+
+**Negative:**
+- Lose Telegram's viral sharing mechanics (sharing deals in Telegram groups/channels)
+- Higher customer acquisition cost (CAC): no organic Telegram distribution, need paid channels
+- Need PWA development expertise (service workers, manifest, caching strategies)
+- VK Mini App adds development surface area (VK Mini Apps SDK, VK-specific auth)
+- Telegram Bot Payments integration (YooKassa native) must be replicated on web
+- Two optional channels (Telegram + VK) increase maintenance burden

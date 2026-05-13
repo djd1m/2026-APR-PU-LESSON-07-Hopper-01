@@ -14,8 +14,9 @@
 ```mermaid
 graph TB
     subgraph Clients
-        WebApp["Web App<br/>(Next.js + React)"]
-        TgBot["Telegram Bot<br/>(telegraf.js)"]
+        WebApp["Web App + PWA<br/>(Next.js + React)<br/>PRIMARY"]
+        TgBot["Telegram Bot<br/>(telegraf.js)<br/>OPTIONAL (VPN users)"]
+        VKApp["VK Mini App<br/>(VK Mini Apps SDK)"]
     end
 
     subgraph API_Gateway["API Gateway / BFF"]
@@ -29,6 +30,7 @@ graph TB
         FintechSvc["Fintech Service"]
         UserSvc["User Service"]
         NotificationSvc["Notification Service"]
+        WebPushSvc["Web Push Service"]
     end
 
     subgraph ML["ML Microservice"]
@@ -50,12 +52,14 @@ graph TB
 
     WebApp -->|HTTPS| GW
     TgBot -->|HTTPS| GW
+    VKApp -->|HTTPS| GW
     GW --> SearchSvc
     GW --> PredictionSvc
     GW --> BookingSvc
     GW --> FintechSvc
     GW --> UserSvc
     GW --> NotificationSvc
+    GW --> WebPushSvc
 
     SearchSvc --> Airlines
     SearchSvc --> Hotels

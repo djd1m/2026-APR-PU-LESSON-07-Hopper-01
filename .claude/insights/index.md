@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-13 — Telegram заблокирован в РФ с апреля 2026 — архитектурный пивот
+
+**Tags:** telegram, blocking, architecture-pivot, critical
+
+**Problem:**
+Роскомнадзор заблокировал Telegram в России с апреля 2026. Проект был спроектирован как Telegram-first (ADR-2), что делает основной канал дистрибуции недоступным для большинства пользователей без VPN.
+
+**Solution:**
+Архитектурный пивот: Web App становится PRIMARY интерфейсом. Telegram Bot сохраняется как ОПЦИЯ для пользователей с VPN (65M россиян используют VPN для доступа к Telegram по данным Дурова). PWA (Progressive Web App) заменяет Telegram Mini App для мобильного опыта. Push-уведомления через Web Push API вместо Telegram notifications.
+
+**References:** [Фонтанка](https://www.fontanka.ru/2026/03/19/76319254/), [AppleInsider](https://appleinsider.ru/tips-tricks/blokirovka-telegram-v-rossii-chto-proishodit-v-aprele-2026.html), [Hi-Tech Mail.ru](https://hi-tech.mail.ru/news/145611-chto-segodnya-s-telegram/)
+
+---
+
 ## 2026-05-12 — Parallel agent execution speeds up SPARC generation 3x
 
 **Tags:** sparc-generation, parallel-agents, performance

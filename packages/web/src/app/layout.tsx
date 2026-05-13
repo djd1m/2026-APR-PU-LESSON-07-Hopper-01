@@ -29,6 +29,8 @@ export default function RootLayout({
       <head>
         <title>HopperRU — Умные авиабилеты</title>
         <meta name="description" content="AI-powered поиск авиабилетов с прогнозом цен и финтех-защитой" />
+        <meta name="theme-color" content="#1878EC" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
         <QueryClientProvider client={queryClient}>

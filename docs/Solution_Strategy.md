@@ -26,18 +26,19 @@
 - Отсутствие исторических данных для ML-моделей (Hopper анализирует 30B+ price points/day)
 - Регуляторные ограничения (152-ФЗ, страховое лицензирование)
 - Специфику платёжной инфраструктуры (MIR/SBP вместо Visa/MC)
-- Доминирование Telegram как канала дистрибуции
+- Блокировка Telegram Роскомнадзором в апреле 2026 (~65M пользователей через VPN)
 
 ### Answer (Ответ)
 
-**Telegram-first AI-предиктор цен + fintech bundle для российского рынка.**
+**Web-first + PWA AI-предиктор цен + fintech bundle для российского рынка.**
 
 Конкретно:
-1. **Telegram Bot как primary interface** (90M+ users, Telegram Payments, viral механики)
+1. **Web App (Next.js) + PWA как primary interface** (доступен всем без VPN, SEO, push-уведомления)
 2. **Rule-based prediction Phase 1** (70% accuracy без big data), ML Phase 2 (85%+), full ML Phase 3 (95%)
 3. **Insurance partner для CFAR** (АльфаСтрахование / Ингосстрах вместо собственной лицензии)
 4. **Price Freeze как killer feature MVP** (не требует страховой лицензии, только финансовый резерв)
-5. **Web App для расширенного UX** (цветовой календарь, dashboard, личный кабинет)
+5. **VK Mini App для social distribution** (100M+ пользователей VK, не заблокирован)
+6. **Telegram Bot как optional channel** (~65M пользователей через VPN)
 
 ---
 
@@ -55,7 +56,7 @@
 | Core value | Дешёвые билеты | Уверенность в оптимальном решении | Prediction + protection > price comparison |
 | User need | "Хочу дешёвый билет" | "Хочу НЕ ПЕРЕПЛАТИТЬ и НЕ ПОТЕРЯТЬ деньги" | Emotional job > functional job |
 | Competitive moat | Traffic, brand | Actuarial data + ML models | Data moat строится booking за booking |
-| Distribution | App Store SEO | Telegram viral loops | Telegram-first > app-first для РФ |
+| Distribution | App Store SEO | Web + PWA + VK viral loops | Web-first + PWA + VK для РФ (Telegram заблокирован) |
 
 ### Ключевые допущения для валидации
 

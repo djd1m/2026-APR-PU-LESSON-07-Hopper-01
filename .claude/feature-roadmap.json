@@ -92,10 +92,32 @@
       "estimated_effort": "S"
     },
     {
+      "id": "pwa-mobile",
+      "title": "PWA Mobile Experience",
+      "description": "Progressive Web App with offline support, push notifications, home screen install. Replaces Telegram Mini App.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E4",
+      "stories": ["US-16"],
+      "depends_on": ["auth-system"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "web-push-notifications",
+      "title": "Web Push Notifications",
+      "description": "Browser push notifications for price alerts, booking updates. Replaces Telegram notifications.",
+      "priority": "mvp",
+      "status": "planned",
+      "epic": "E4",
+      "stories": ["US-15"],
+      "depends_on": ["auth-system"],
+      "estimated_effort": "M"
+    },
+    {
       "id": "telegram-bot",
       "title": "Telegram Bot (Search + Booking)",
-      "description": "Natural language search, inline results, booking flow, notifications.",
-      "priority": "mvp",
+      "description": "Natural language search, inline results, booking flow, notifications. Optional: VPN users only (Telegram blocked April 2026).",
+      "priority": "v1.0",
       "status": "planned",
       "epic": "E4",
       "stories": ["US-13", "US-14", "US-15"],
@@ -105,12 +127,23 @@
     {
       "id": "telegram-miniapp",
       "title": "Telegram Mini App (Calendar + Account)",
-      "description": "Rich UI inside Telegram: price calendar, booking history, savings dashboard.",
-      "priority": "mvp",
+      "description": "Rich UI inside Telegram: price calendar, booking history, savings dashboard. Optional: VPN users only (Telegram blocked April 2026).",
+      "priority": "v1.0",
       "status": "planned",
       "epic": "E4",
       "stories": ["US-16"],
       "depends_on": ["telegram-bot"],
+      "estimated_effort": "L"
+    },
+    {
+      "id": "vk-miniapp",
+      "title": "VK Mini App",
+      "description": "VK Mini App for social distribution. VK has 100M+ Russian users and is NOT blocked.",
+      "priority": "v1.0",
+      "status": "planned",
+      "epic": "E4",
+      "stories": [],
+      "depends_on": ["booking-engine"],
       "estimated_effort": "L"
     },
     {

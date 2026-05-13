@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-HopperRU — российский аналог Hopper ($850M revenue), AI-powered travel booking с финтех-защитой путешественника. Telegram-first, domestic routes, MIR/SBP payments.
+HopperRU — российский аналог Hopper ($850M revenue), AI-powered travel booking с финтех-защитой путешественника. Web-first + PWA, domestic routes, MIR/SBP payments. Telegram bot optional (VPN users), VK Mini App as alternative social distribution.
 
 **One-liner:** "Booking.com + AI-предиктор цен + финтех-страховка путешественника"
 
@@ -10,8 +10,9 @@ HopperRU — российский аналог Hopper ($850M revenue), AI-powere
 
 - **Pattern:** Distributed Monolith (Monorepo)
 - **Backend:** NestJS (TypeScript)
-- **Frontend:** Next.js + React
-- **Telegram Bot:** telegraf.js
+- **Frontend:** Next.js + React (PWA-enabled, primary interface)
+- **Telegram Bot:** telegraf.js (optional, VPN users)
+- **VK Mini App:** VK Mini Apps SDK (alternative social distribution)
 - **ML Service:** FastAPI (Python) + scikit-learn → TensorFlow
 - **Database:** PostgreSQL + Redis (cache) + ClickHouse (analytics)
 - **Payments:** YooKassa (MIR, SBP, QR)
@@ -24,7 +25,9 @@ HopperRU — российский аналог Hopper ($850M revenue), AI-powere
 |-------|-----------|-----|
 | API | NestJS | TypeScript, modular, fast startup |
 | Web | Next.js 15 | SSR, React, good DX |
-| Bot | telegraf.js | Telegram-native, 90M RU users |
+| Bot | telegraf.js | Telegram bot (optional, VPN users) |
+| PWA | next-pwa + Service Worker | Offline support, push notifications, home screen install |
+| VK Mini App | VK Mini Apps SDK | Social distribution via VK (100M+ RU users, not blocked) |
 | ML | FastAPI + sklearn | Rule-based Phase 1, ML Phase 2 |
 | DB | PostgreSQL 16 | Relational, JSONB, reliable |
 | Cache | Redis 7 | Price cache, sessions, rate limiting |
