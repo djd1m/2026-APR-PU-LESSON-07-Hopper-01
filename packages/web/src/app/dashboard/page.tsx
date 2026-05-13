@@ -105,7 +105,7 @@ function DashboardContent() {
               {data.bookings.map((booking) => (
                 <a
                   key={booking.id}
-                  href={`/booking/${booking.id}`}
+                  href={`/bookings/${booking.id}`}
                   className="block p-4 rounded-lg border border-gray-100 hover:border-primary-300 transition-colors"
                 >
                   <div className="flex items-center justify-between">
