@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { isAuthenticated, refreshTokens, getAccessToken } from '../lib/auth';
+import { isAuthenticated, refreshTokens, clearAuth } from '../lib/auth';
+import { apiClient } from '../lib/api';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,9 +11,8 @@ interface AuthGuardProps {
 }
 
 /**
- * Client-side auth guard component.
- * Wraps protected pages — redirects to /auth if user is not authenticated.
- * Attempts token refresh before redirecting.
+ * Client-side auth guard.
+ * Validates token against API, redirects to /auth if invalid.
  */
 export default function AuthGuard({ children, fallback }: AuthGuardProps) {
   const router = useRouter();
@@ -20,18 +20,30 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   useEffect(() => {
     async function checkAuth() {
-      if (isAuthenticated()) {
-        setStatus('authenticated');
-        return;
+      if (!isAuthenticated()) {
+        // No token at all → try refresh
+        const newToken = await refreshTokens();
+        if (!newToken) {
+          setStatus('unauthenticated');
+          router.replace('/auth');
+          return;
+        }
       }
 
-      // Attempt to refresh tokens
-      const newToken = await refreshTokens();
-      if (newToken) {
+      // Token exists — validate it against API
+      try {
+        await apiClient('/auth/me');
         setStatus('authenticated');
-      } else {
-        setStatus('unauthenticated');
-        router.replace('/auth');
+      } catch {
+        // Token invalid/expired — try refresh once
+        const newToken = await refreshTokens();
+        if (newToken) {
+          setStatus('authenticated');
+        } else {
+          clearAuth();
+          setStatus('unauthenticated');
+          router.replace('/auth');
+        }
       }
     }
 
@@ -48,9 +60,7 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
     );
   }
 
-  if (status === 'unauthenticated') {
-    return null;
-  }
+  if (status === 'unauthenticated') return null;
 
   return <>{children}</>;
 }

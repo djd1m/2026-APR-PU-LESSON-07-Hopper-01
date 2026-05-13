@@ -26,11 +26,20 @@ interface DashboardData {
 }
 
 function DashboardContent() {
-  const userId = 'current';
-
   const { data, isLoading } = useQuery({
-    queryKey: ['dashboard', userId],
-    queryFn: () => apiClient<DashboardData>(`/users/${userId}/dashboard`),
+    queryKey: ['dashboard'],
+    queryFn: async () => {
+      const [me, savings] = await Promise.allSettled([
+        apiClient<{ id: string; name: string; phone: string }>('/user/me'),
+        apiClient<{ total_savings: number }>('/user/savings'),
+      ]);
+      return {
+        bookings: [],
+        total_savings: savings.status === 'fulfilled' ? savings.value.total_savings : 0,
+        alerts: [],
+        referral_code: '',
+      } as DashboardData;
+    },
   });
 
   const formatPrice = (amount: number) =>
