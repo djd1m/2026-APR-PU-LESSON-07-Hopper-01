@@ -35,7 +35,30 @@
 
   .input-field {
     @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg
+           text-gray-900 bg-white
            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
            placeholder:text-gray-400 transition-colors duration-200;
+  }
+
+  /* Fix: dropdown/select options must have dark text on white background */
+  select, option, datalist {
+    @apply text-gray-900 bg-white;
+  }
+
+  /* Fix: autocomplete dropdown suggestions */
+  [role="listbox"], [role="option"], .autocomplete-option {
+    @apply text-gray-900 bg-white;
+  }
+
+  /* Fix: counter buttons (+/-) visibility */
+  .counter-btn {
+    @apply w-10 h-10 flex items-center justify-center
+           text-gray-900 bg-gray-100 hover:bg-gray-200
+           border border-gray-300 rounded-lg font-bold text-lg
+           transition-colors cursor-pointer select-none;
+  }
+
+  .counter-value {
+    @apply text-gray-900 font-semibold text-lg min-w-[2rem] text-center;
   }
 }

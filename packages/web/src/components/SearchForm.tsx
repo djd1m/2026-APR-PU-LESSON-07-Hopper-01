@@ -122,7 +122,7 @@ export function SearchForm({ compact = false, defaultValues }: SearchFormProps) 
               {originSuggestions.map((a) => (
                 <li
                   key={a.code}
-                  className="px-4 py-2 hover:bg-primary-50 cursor-pointer text-sm"
+                  className="px-4 py-2 hover:bg-primary-50 cursor-pointer text-sm text-gray-900"
                   onMouseDown={() => {
                     setOrigin(a.code);
                     setOriginDisplay(`${a.code} - ${a.city}`);
@@ -176,7 +176,7 @@ export function SearchForm({ compact = false, defaultValues }: SearchFormProps) 
               {destSuggestions.map((a) => (
                 <li
                   key={a.code}
-                  className="px-4 py-2 hover:bg-primary-50 cursor-pointer text-sm"
+                  className="px-4 py-2 hover:bg-primary-50 cursor-pointer text-sm text-gray-900"
                   onMouseDown={() => {
                     setDestination(a.code);
                     setDestDisplay(`${a.code} - ${a.city}`);
@@ -210,15 +210,15 @@ export function SearchForm({ compact = false, defaultValues }: SearchFormProps) 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+            className="w-10 h-10 rounded-lg border border-gray-300 bg-gray-100 text-gray-900 font-bold text-lg flex items-center justify-center hover:bg-gray-200"
             onClick={() => setPassengers((p) => Math.max(1, p - 1))}
           >
             -
           </button>
-          <span className="w-8 text-center font-medium">{passengers}</span>
+          <span className="w-10 text-center font-semibold text-gray-900 text-lg">{passengers}</span>
           <button
             type="button"
-            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+            className="w-10 h-10 rounded-lg border border-gray-300 bg-gray-100 text-gray-900 font-bold text-lg flex items-center justify-center hover:bg-gray-200"
             onClick={() => setPassengers((p) => Math.min(9, p + 1))}
           >
             +
