@@ -79,7 +79,7 @@ function BookingsContent() {
             const status = STATUS_MAP[b.status] || { label: b.status, color: 'bg-gray-100' };
             const flight = b.flights?.[0];
             return (
-              <div key={b.id} className="bg-white rounded-xl shadow p-6">
+              <a key={b.id} href={`/bookings/${b.id}`} className="block bg-white rounded-xl shadow p-6 hover:shadow-lg hover:border-blue-300 border border-transparent transition-all cursor-pointer">
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${status.color}`}>
@@ -121,10 +121,12 @@ function BookingsContent() {
                   </div>
                 )}
 
-                <div className="mt-3 text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                  ⚠️ Это демо-бронирование. PNR сгенерирован локально и не существует в системе авиакомпании.
-                </div>
-              </div>
+                {b.status === 'pending' && (
+                  <div className="mt-3 text-sm text-yellow-700 bg-yellow-50 p-2 rounded font-medium">
+                    ⏳ Нажмите чтобы перейти к оплате
+                  </div>
+                )}
+              </a>
             );
           })}
         </div>
