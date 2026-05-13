@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../common/redis.service';
 import { SearchFlightsDto, SearchCalendarDto } from './search.dto';
+import { TravelpayoutsService } from './travelpayouts.service';
 
 /** Approximate flight distances (km) between major Russian airports */
 const ROUTE_DISTANCES: Record<string, number> = {
@@ -70,7 +71,10 @@ interface CalendarDay {
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
 
-  constructor(private readonly redis: RedisService) {}
+  constructor(
+    private readonly redis: RedisService,
+    private readonly travelpayouts: TravelpayoutsService,
+  ) {}
 
   /**
    * Search flights by route, date, passengers, and cabin class.
@@ -90,16 +94,35 @@ export class SearchService {
       return parsed;
     }
 
-    // Generate mock flights
-    const flights = this.generateMockFlights(
-      dto.origin,
-      dto.destination,
-      dto.departure_date,
-      dto.cabin_class || 'economy',
-      dto.passengers || 1,
-    );
+    // Try Travelpayouts API first, fall back to mock data
+    let flights: any[];
+    let source = 'mock';
 
-    // Sort by price ascending
+    if (this.travelpayouts.isAvailable()) {
+      const tpFlights = await this.travelpayouts.searchFlights(
+        dto.origin,
+        dto.destination,
+        dto.departure_date,
+        dto.passengers || 1,
+      );
+      if (tpFlights.length > 0) {
+        flights = tpFlights;
+        source = 'travelpayouts';
+        this.logger.log(`Using Travelpayouts data: ${flights.length} real flights`);
+      } else {
+        this.logger.warn(`Travelpayouts returned 0 results, falling back to mock`);
+        flights = this.generateMockFlights(
+          dto.origin, dto.destination, dto.departure_date,
+          dto.cabin_class || 'economy', dto.passengers || 1,
+        );
+      }
+    } else {
+      flights = this.generateMockFlights(
+        dto.origin, dto.destination, dto.departure_date,
+        dto.cabin_class || 'economy', dto.passengers || 1,
+      );
+    }
+
     flights.sort((a, b) => a.price - b.price);
 
     const result: SearchResultResponse = {
