@@ -68,4 +68,54 @@ export class FintechController {
   ) {
     return this.fintechService.createProtection(req.user.sub, dto);
   }
+
+  // =========================================================================
+  // CFAR ENDPOINTS
+  // =========================================================================
+
+  @Post('protect/cfar/:bookingId')
+  @ApiOperation({
+    summary: 'Add CFAR protection to a booking',
+    description:
+      'Cancel For Any Reason protection. Premium: 15-20% of booking price. ' +
+      '100% refund if cancelled 24h+ before departure. ' +
+      'Provided by licensed insurance partner.',
+  })
+  @ApiParam({ name: 'bookingId', description: 'Booking UUID' })
+  @ApiCreatedResponse({ description: 'CFAR protection activated' })
+  async addCfarProtection(
+    @Req() req: Request & { user: { sub: string } },
+    @Param('bookingId') bookingId: string,
+  ) {
+    return this.fintechService.addCfarProtection(bookingId, req.user.sub);
+  }
+
+  @Post('protect/cfar/:protectionId/claim')
+  @ApiOperation({
+    summary: 'Claim CFAR protection — initiate 100% refund',
+    description:
+      'Must be 24h+ before departure. Initiates full refund of booking price. ' +
+      'CFAR premium is NOT refunded. Refund within 5 business days.',
+  })
+  @ApiParam({ name: 'protectionId', description: 'CFAR protection UUID' })
+  @ApiOkResponse({ description: 'Claim approved, refund initiated' })
+  async claimCfar(
+    @Req() req: Request & { user: { sub: string } },
+    @Param('protectionId') protectionId: string,
+  ) {
+    return this.fintechService.claimCfar(protectionId, req.user.sub);
+  }
+
+  @Get('protect/cfar/:bookingId')
+  @ApiOperation({
+    summary: 'Get CFAR protection details for a booking',
+  })
+  @ApiParam({ name: 'bookingId', description: 'Booking UUID' })
+  @ApiOkResponse({ description: 'CFAR protection details' })
+  async getCfarProtection(
+    @Req() req: Request & { user: { sub: string } },
+    @Param('bookingId') bookingId: string,
+  ) {
+    return this.fintechService.getCfarProtection(bookingId, req.user.sub);
+  }
 }
