@@ -68,4 +68,51 @@ export class FintechController {
   ) {
     return this.fintechService.createProtection(req.user.sub, dto);
   }
+
+  // =========================================================================
+  // PRICE DROP PROTECTION ENDPOINTS
+  // =========================================================================
+
+  @Post('protect/price-drop/:bookingId')
+  @ApiOperation({
+    summary: 'Add Price Drop Protection to a booking',
+    description:
+      'Monitors the flight price for 10 days after booking. ' +
+      'Premium: 1,000-2,000 RUB. Auto-refunds the difference if price drops. ' +
+      'Max refund: 50% of booking price. No claim process needed.',
+  })
+  @ApiParam({ name: 'bookingId', description: 'Booking UUID' })
+  @ApiCreatedResponse({ description: 'Price Drop Protection activated' })
+  async addPriceDropProtection(
+    @Req() req: Request & { user: { sub: string } },
+    @Param('bookingId') bookingId: string,
+  ) {
+    return this.fintechService.addPriceDropProtection(bookingId, req.user.sub);
+  }
+
+  @Post('protect/price-drop/:protectionId/check')
+  @ApiOperation({
+    summary: 'Trigger a price drop check for a specific protection',
+    description:
+      'Compares current flight price vs booked price and auto-refunds if dropped. ' +
+      'Normally called by the background job every 30 minutes.',
+  })
+  @ApiParam({ name: 'protectionId', description: 'Price Drop Protection UUID' })
+  @ApiOkResponse({ description: 'Price check result' })
+  async checkPriceDrop(@Param('protectionId') protectionId: string) {
+    return this.fintechService.checkPriceDrop(protectionId);
+  }
+
+  @Get('protect/price-drop/:bookingId')
+  @ApiOperation({
+    summary: 'Get Price Drop Protection details for a booking',
+  })
+  @ApiParam({ name: 'bookingId', description: 'Booking UUID' })
+  @ApiOkResponse({ description: 'Price Drop Protection details' })
+  async getPriceDropProtection(
+    @Req() req: Request & { user: { sub: string } },
+    @Param('bookingId') bookingId: string,
+  ) {
+    return this.fintechService.getPriceDropProtection(bookingId, req.user.sub);
+  }
 }

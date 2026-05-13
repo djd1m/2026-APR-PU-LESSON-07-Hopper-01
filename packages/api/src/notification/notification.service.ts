@@ -9,6 +9,7 @@ export enum NotificationJobType {
   FREEZE_EXPIRY_REMINDER = 'freeze-expiry-reminder',
   WEEKLY_DIGEST = 'weekly-digest',
   PRICE_DROP_DETECTED = 'price-drop-detected',
+  PRICE_DROP_CHECK = 'price-drop-check',
 }
 
 interface NotificationJobData {
@@ -140,6 +141,37 @@ export class NotificationService implements OnModuleInit {
   }
 
   /**
+   * Schedule recurring price drop checks for all active protections.
+   * Runs every 30 minutes. Each active Price Drop Protection gets its own job.
+   *
+   * In production, this is triggered by a cron job: "*/30 * * * *"
+   * The FintechService.checkPriceDrop() handles the actual comparison
+   * and auto-refund logic.
+   */
+  async schedulePriceDropChecks(activeProtectionIds: string[]) {
+    const jobs = activeProtectionIds.map((protectionId) => ({
+      name: NotificationJobType.PRICE_DROP_CHECK,
+      data: {
+        type: NotificationJobType.PRICE_DROP_CHECK,
+        userId: 'system',
+        payload: { protectionId },
+      },
+      opts: {
+        removeOnComplete: 100,
+        removeOnFail: 50,
+        jobId: `price-drop-check-${protectionId}-${Date.now()}`,
+      },
+    }));
+
+    if (jobs.length > 0) {
+      await this.queue.addBulk(jobs);
+      this.logger.log(
+        `Scheduled ${jobs.length} price drop checks for active protections`,
+      );
+    }
+  }
+
+  /**
    * Process a notification job.
    */
   private async processJob(job: Job<NotificationJobData>) {
@@ -169,6 +201,16 @@ export class NotificationService implements OnModuleInit {
         // TODO: Format price drop notification, send via Telegram
         this.logger.log(
           `Price drop detected for user ${userId}: saved ${payload.savings} RUB`,
+        );
+        break;
+
+      case NotificationJobType.PRICE_DROP_CHECK:
+        // Delegate to FintechService.checkPriceDrop()
+        // In production, inject FintechService and call:
+        // const result = await this.fintechService.checkPriceDrop(payload.protectionId);
+        // if (result.drop_detected) { send notification to user }
+        this.logger.log(
+          `Price drop check for protection ${payload.protectionId}`,
         );
         break;
 
