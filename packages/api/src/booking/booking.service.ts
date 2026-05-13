@@ -303,7 +303,7 @@ export class BookingService {
       where: { user_id: userId },
       include: {
         items: {
-          include: { flight: true },
+          // flight relation removed (mock flights in Redis)
         },
         passengers: true,
         protections: true,
@@ -318,20 +318,23 @@ export class BookingService {
         pnr: b.pnr,
         total_price: { amount: Number(b.total_price), currency: b.currency },
         flights: b.items
-          .filter((item) => item.flight)
-          .map((item) => ({
-            id: item.flight!.id,
-            airline: item.flight!.airline,
-            flight_number: item.flight!.flight_number,
-            origin: item.flight!.origin,
-            destination: item.flight!.destination,
-            departure_at: String(item.flight_id),
-            arrival_at: String(item.flight_id),
-            price: {
-              amount: Number(item.price),
-              currency: item.currency,
-            },
-          })),
+          .filter((item) => item.flight_id)
+          .map((item) => {
+            // Parse flight info from ID: "tp-SU-1132-2026-07-15T17:45:00+03:00" or mock UUID
+            const parts = (item.flight_id || '').split('-');
+            const airline = parts.length > 1 ? parts[1] : 'XX';
+            const flightNum = parts.length > 2 ? `${parts[1]}-${parts[2]}` : item.flight_id || '';
+            return {
+              id: item.flight_id,
+              airline,
+              flight_number: flightNum,
+              origin: 'N/A',
+              destination: 'N/A',
+              departure_at: parts.length > 3 ? parts.slice(3).join('-') : '',
+              arrival_at: '',
+              price: { amount: Number(item.price), currency: item.currency },
+            };
+          }),
         passengers: b.passengers.map((p) => ({
           first_name: p.first_name,
           last_name: p.last_name,
@@ -359,7 +362,7 @@ export class BookingService {
       where: { id: bookingId, user_id: userId },
       include: {
         items: {
-          include: { flight: true },
+          // flight relation removed (mock flights in Redis)
         },
         passengers: true,
         protections: true,
@@ -383,21 +386,23 @@ export class BookingService {
         },
         payment_method: booking.payment_method?.toLowerCase() ?? null,
         flights: booking.items
-          .filter((item) => item.flight)
-          .map((item) => ({
-            id: item.flight!.id,
-            airline: item.flight!.airline,
-            flight_number: item.flight!.flight_number,
-            origin: item.flight!.origin,
-            destination: item.flight!.destination,
-            departure_at: String(item.flight_id),
-            arrival_at: String(item.flight_id),
-            duration_min: item.flight!.duration_min,
-            price: {
-              amount: Number(item.price),
-              currency: item.currency,
-            },
-          })),
+          .filter((item) => item.flight_id)
+          .map((item) => {
+            const parts = (item.flight_id || '').split('-');
+            const airline = parts.length > 1 ? parts[1] : 'XX';
+            const flightNum = parts.length > 2 ? `${parts[1]}-${parts[2]}` : item.flight_id || '';
+            return {
+              id: item.flight_id,
+              airline,
+              flight_number: flightNum,
+              origin: 'N/A',
+              destination: 'N/A',
+              departure_at: parts.length > 3 ? parts.slice(3).join('-') : '',
+              arrival_at: '',
+              duration_min: 0,
+              price: { amount: Number(item.price), currency: item.currency },
+            };
+          }),
         passengers: booking.passengers.map((p) => ({
           first_name: p.first_name,
           last_name: p.last_name,
