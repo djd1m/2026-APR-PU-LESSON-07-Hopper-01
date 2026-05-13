@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
+import { CreateAlertDto, AlertResponseDto } from './user.dto';
 import { Request } from 'express';
 
 @ApiTags('user')
@@ -53,24 +54,18 @@ export class UserController {
   }
 
   @Get('alerts')
-  @ApiOperation({ summary: 'Get active price alerts' })
-  @ApiOkResponse({ description: 'List of price alerts' })
+  @ApiOperation({ summary: 'Get price alerts for current user' })
+  @ApiOkResponse({ description: 'List of price alerts', type: [AlertResponseDto] })
   async getAlerts(@Req() req: Request & { user: { sub: string } }) {
     return this.userService.getAlerts(req.user.sub);
   }
 
   @Post('alerts')
-  @ApiOperation({ summary: 'Create a new price alert for a route' })
-  @ApiCreatedResponse({ description: 'Price alert created' })
+  @ApiOperation({ summary: 'Create a new price alert (max 10 active per user)' })
+  @ApiCreatedResponse({ description: 'Price alert created', type: AlertResponseDto })
   async createAlert(
     @Req() req: Request & { user: { sub: string } },
-    @Body()
-    data: {
-      origin: string;
-      destination: string;
-      departure_date: string;
-      target_price: number;
-    },
+    @Body() data: CreateAlertDto,
   ) {
     return this.userService.createAlert(req.user.sub, data);
   }
