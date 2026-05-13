@@ -92,6 +92,75 @@ export class FintechService {
   }
 
   /**
+   * Calculate bundle discount for CFAR + Price Drop.
+   * When both are selected together, apply 19% discount on combined premiums.
+   * bundlePrice = sum(individual) * 0.81
+   */
+  calculateBundle(
+    protectionTypes: string[],
+    flightPrice: number,
+  ): {
+    individual: Record<string, { amount: number; currency: string }>;
+    bundleDiscount: number;
+    bundlePrice: { amount: number; currency: string };
+    totalWithoutBundle: { amount: number; currency: string };
+    savingsPercent: number;
+    isBundleEligible: boolean;
+  } {
+    // Premium calculation per protection type
+    const premiums: Record<string, number> = {};
+    for (const type of protectionTypes) {
+      switch (type) {
+        case 'cancel_for_any_reason':
+        case 'CFAR':
+          premiums[type] = Math.max(1500, Math.min(5000, Math.round(flightPrice * 0.12)));
+          break;
+        case 'price_drop':
+        case 'PRICE_DROP':
+          premiums[type] = 1500;
+          break;
+        default:
+          premiums[type] = 2000;
+      }
+    }
+
+    const individual: Record<string, { amount: number; currency: string }> = {};
+    for (const [type, amount] of Object.entries(premiums)) {
+      individual[type] = { amount, currency: 'RUB' };
+    }
+
+    const totalWithout = Object.values(premiums).reduce((sum, p) => sum + p, 0);
+
+    // Bundle eligibility: must include both CFAR and PriceDrop
+    const hasCFAR = protectionTypes.some(
+      (t) => t === 'cancel_for_any_reason' || t === 'CFAR',
+    );
+    const hasPriceDrop = protectionTypes.some(
+      (t) => t === 'price_drop' || t === 'PRICE_DROP',
+    );
+    const isBundleEligible = hasCFAR && hasPriceDrop;
+
+    const BUNDLE_DISCOUNT = 0.19;
+    const bundleDiscount = isBundleEligible
+      ? Math.round(totalWithout * BUNDLE_DISCOUNT)
+      : 0;
+    const bundleTotal = totalWithout - bundleDiscount;
+
+    this.logger.log(
+      `Bundle calculation: types=${protectionTypes.join(',')} total=${totalWithout} discount=${bundleDiscount} eligible=${isBundleEligible}`,
+    );
+
+    return {
+      individual,
+      bundleDiscount,
+      bundlePrice: { amount: bundleTotal, currency: 'RUB' },
+      totalWithoutBundle: { amount: totalWithout, currency: 'RUB' },
+      savingsPercent: isBundleEligible ? 19 : 0,
+      isBundleEligible,
+    };
+  }
+
+  /**
    * Create protections for an existing booking.
    * Supports: CFAR (via insurance partner), Price Drop, Flight Disruption.
    */

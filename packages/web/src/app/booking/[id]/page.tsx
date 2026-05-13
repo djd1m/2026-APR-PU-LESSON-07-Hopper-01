@@ -262,10 +262,32 @@ export default function BookingPage() {
     price_drop: 1500,
   };
 
-  const totalProtectionCost = selectedProtections.reduce(
+  // Bundle discount: 19% off when both CFAR + Price Drop are selected
+  const BUNDLE_DISCOUNT = 0.19;
+  const hasCFAR = selectedProtections.includes('cancel_for_any_reason');
+  const hasPriceDrop = selectedProtections.includes('price_drop');
+  const isBundleEligible = hasCFAR && hasPriceDrop;
+
+  const totalProtectionWithout = selectedProtections.reduce(
     (sum, type) => sum + (protectionCosts[type] || 0),
     0
   );
+  const bundleSavings = isBundleEligible
+    ? Math.round(totalProtectionWithout * BUNDLE_DISCOUNT)
+    : 0;
+  const totalProtectionCost = totalProtectionWithout - bundleSavings;
+
+  const selectBundle = () => {
+    const next: string[] = [];
+    if (!hasCFAR) next.push('cancel_for_any_reason');
+    if (!hasPriceDrop) next.push('price_drop');
+    setSelectedProtections((prev) => {
+      const set = new Set(prev);
+      set.add('cancel_for_any_reason');
+      set.add('price_drop');
+      return Array.from(set);
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -444,6 +466,53 @@ export default function BookingPage() {
               onChange={() => toggleProtection('price_drop')}
             />
           </div>
+          {/* Bundle & Save option */}
+          {!isBundleEligible && (
+            <div className="mt-4 p-4 border-2 border-dashed border-primary-300 rounded-lg bg-primary-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-primary-700">
+                    Bundle &amp; Save &mdash; скидка 19%
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Выберите &laquo;Отмена по любой причине&raquo; + &laquo;Защита от падения цены&raquo; вместе
+                    и сэкономьте {formatPrice(
+                      Math.round(
+                        (protectionCosts.cancel_for_any_reason + protectionCosts.price_drop) * BUNDLE_DISCOUNT
+                      )
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatPrice(protectionCosts.cancel_for_any_reason + protectionCosts.price_drop)}{' '}
+                    &rarr;{' '}
+                    <span className="font-semibold text-primary-600">
+                      {formatPrice(
+                        Math.round(
+                          (protectionCosts.cancel_for_any_reason + protectionCosts.price_drop) * (1 - BUNDLE_DISCOUNT)
+                        )
+                      )}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={selectBundle}
+                  className="btn-primary whitespace-nowrap text-sm px-4 py-2"
+                >
+                  Выбрать комплект
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isBundleEligible && (
+            <div className="mt-4 p-4 border-2 border-green-300 rounded-lg bg-green-50">
+              <p className="font-semibold text-green-700">
+                Комплект активен &mdash; вы экономите {formatPrice(bundleSavings)} (19%)
+              </p>
+            </div>
+          )}
+
           {selectedProtections.length === 0 && (
             <p className="text-sm text-amber-600 mt-3">
               Без защиты вы рискуете потерять {formatPrice(flight.price)} при отмене.
@@ -460,7 +529,20 @@ export default function BookingPage() {
           {totalProtectionCost > 0 && (
             <div className="flex items-center justify-between mb-4">
               <span className="text-gray-600">Защита</span>
-              <span>{formatPrice(totalProtectionCost)}</span>
+              <div className="text-right">
+                {bundleSavings > 0 && (
+                  <span className="text-sm text-gray-400 line-through mr-2">
+                    {formatPrice(totalProtectionWithout)}
+                  </span>
+                )}
+                <span>{formatPrice(totalProtectionCost)}</span>
+              </div>
+            </div>
+          )}
+          {bundleSavings > 0 && (
+            <div className="flex items-center justify-between mb-4 text-green-600">
+              <span>Скидка комплекта (19%)</span>
+              <span>-{formatPrice(bundleSavings)}</span>
             </div>
           )}
           <div className="border-t pt-4 flex items-center justify-between">
