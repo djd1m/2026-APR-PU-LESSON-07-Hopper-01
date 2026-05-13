@@ -11,7 +11,13 @@ import {
   BookingResponseDto,
   CancelBookingResponseDto,
 } from './booking.dto';
-import { BookingStatus, PaymentMethod, ProtectionType } from '@prisma/client';
+// Prisma enums as string literals (avoids cross-package import issues in monorepo)
+const BookingStatus = { PENDING: 'PENDING', CONFIRMED: 'CONFIRMED', CANCELLED: 'CANCELLED', COMPLETED: 'COMPLETED' } as const;
+const PaymentMethod = { MIR: 'MIR', SBP: 'SBP', TELEGRAM: 'TELEGRAM' } as const;
+const ProtectionType = { CANCEL_FOR_ANY_REASON: 'CANCEL_FOR_ANY_REASON', PRICE_DROP: 'PRICE_DROP', FLIGHT_DISRUPTION: 'FLIGHT_DISRUPTION' } as const;
+type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
+type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
+type ProtectionType = (typeof ProtectionType)[keyof typeof ProtectionType];
 
 /** Map DTO payment_method string to Prisma enum */
 function toPaymentMethod(method: string): PaymentMethod {
@@ -429,7 +435,7 @@ export class BookingService {
 
     if (
       booking.status !== BookingStatus.CONFIRMED &&
-      booking.status !== BookingStatus.TICKETED
+      booking.status !== BookingStatus.COMPLETED
     ) {
       throw new BadRequestException(
         'Отмена возможна только для подтверждённых бронирований.',

@@ -6,7 +6,11 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "incremental": true,
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "declaration": false,
+    "declarationMap": false,
+    "skipLibCheck": true,
+    "strict": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]

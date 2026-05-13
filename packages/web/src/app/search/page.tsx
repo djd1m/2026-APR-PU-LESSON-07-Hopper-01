@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { SearchForm } from '@/components/SearchForm';
 import { FlightCard } from '@/components/FlightCard';
@@ -46,7 +48,7 @@ interface CalendarDay {
   tier: 'green' | 'yellow' | 'red';
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const origin = searchParams.get('origin') || '';
   const destination = searchParams.get('destination') || '';
@@ -239,5 +241,14 @@ export default function SearchPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" /></div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
