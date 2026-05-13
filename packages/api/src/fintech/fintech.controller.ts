@@ -68,4 +68,35 @@ export class FintechController {
   ) {
     return this.fintechService.createProtection(req.user.sub, dto);
   }
+
+  @Post('protect/disruption')
+  @ApiOperation({
+    summary: 'Add disruption guarantee to a booking',
+    description:
+      'Covers 2h+ flight delays with auto-rebooking on next available flight. ' +
+      'Includes hotel and meal compensation.',
+  })
+  @ApiCreatedResponse({ description: 'Disruption guarantee activated' })
+  async addDisruptionGuarantee(
+    @Req() req: Request & { user: { sub: string } },
+    @Body() dto: { booking_id: string },
+  ) {
+    return this.fintechService.addDisruptionGuarantee(dto.booking_id, req.user.sub);
+  }
+
+  @Post('protect/disruption/:id/claim')
+  @ApiOperation({
+    summary: 'Claim disruption guarantee',
+    description:
+      'Submit a claim when flight is delayed 2h+ or cancelled. ' +
+      'Validates delay, initiates auto-rebooking, and calculates compensation.',
+  })
+  @ApiParam({ name: 'id', description: 'Disruption protection UUID' })
+  @ApiOkResponse({ description: 'Claim processed' })
+  async claimDisruption(
+    @Req() req: Request & { user: { sub: string } },
+    @Param('id') id: string,
+  ) {
+    return this.fintechService.claimDisruption(id, req.user.sub);
+  }
 }
