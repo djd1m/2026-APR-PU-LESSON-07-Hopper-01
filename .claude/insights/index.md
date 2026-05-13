@@ -99,3 +99,59 @@ TRIZ Principle #15 (Dynamism): Phase 1 uses rule-based prediction with seasonal 
 **References:** docs/ADR.md (ADR-3), packages/ml/models/predictor.py, packages/ml/models/rules.py
 
 ---
+
+## 2026-05-13 — YooKassa payment_url must be re-fetched from API for pending bookings
+
+**Tags:** yookassa, payment, booking-flow, gotcha
+
+**Problem:**
+When a user returns to a pending booking to retry payment, the stored `payment_url` from the initial YooKassa payment creation is expired or invalid. Attempting to redirect the user to the old URL results in a YooKassa error page.
+
+**Solution:**
+Never store `payment_url` in the database for reuse. For pending bookings, always re-fetch the payment URL by calling the YooKassa Payments API (`GET /v3/payments/{id}`) to get the current `confirmation.confirmation_url`. If the payment object itself is expired, create a new payment. This ensures the user always gets a valid redirect URL.
+
+**References:** packages/api/src/payment/payment.service.ts, YooKassa API docs (https://yookassa.ru/developers/api)
+
+---
+
+## 2026-05-13 — Dashboard /booking/:id vs /bookings/:id route confusion
+
+**Tags:** next-js, routing, booking-dashboard, naming-convention
+
+**Problem:**
+The dashboard had two similar routes: `/booking/:id` (showing a single flight by flight ID) and `/bookings/:id` (showing a booking by booking ID). Developers and users confused the two, leading to "not found" errors when navigating from booking lists to booking details, because flight IDs and booking IDs have different formats and different API endpoints.
+
+**Solution:**
+Standardize routes: `/bookings` for the list, `/bookings/:bookingId` for booking details, and `/flights/:flightId` for flight details. Remove the ambiguous `/booking/:id` route entirely. Update all internal links and navigation to use the canonical paths. Add a redirect from `/booking/:id` to `/bookings/:id` for backwards compatibility.
+
+**References:** packages/web/src/app/dashboard/, packages/web/src/app/bookings/
+
+---
+
+## 2026-05-13 — VPS port 9100 blocked externally, had to remap to 7100-7101
+
+**Tags:** vps, port-management, deployment, adminvps
+
+**Problem:**
+Port 9100 (commonly used by node_exporter and initially planned for the web frontend) was blocked externally by the VPS provider (AdminVPS/HOSTKEY). The web application was unreachable from outside the server despite being correctly bound to 0.0.0.0:9100 inside the container.
+
+**Solution:**
+Remapped all service ports to a dedicated range: Web on 7100, API on 7101, ML on 9102. Updated docker-compose.yml port mappings, .env.example, Nginx reverse proxy config, and all documentation. Rule of thumb: always test external port accessibility with `curl` from an external machine before committing to a port scheme on shared VPS.
+
+**References:** docker-compose.yml, .env.example, README/ru/admin-guide.md
+
+---
+
+## 2026-05-13 — Travelpayouts Data API returns only 1 best price per route
+
+**Tags:** travelpayouts, flight-search, data-api, limitation
+
+**Problem:**
+The Travelpayouts Data API (`/v1/prices/cheap`) returns only the single best (cheapest) price per route/date combination, not a list of flights. This made the search results page look empty with just one option, unlike competitors showing 10-20 flights per route.
+
+**Solution:**
+Supplement the single real Travelpayouts price with estimated flights: generate 5-8 additional flight options with realistic price variations (+-10-30% from the base price), different airlines from the supported list, and varied departure times. Mark the Travelpayouts result as "verified price" and the estimated ones as "estimated". When Amadeus credentials become available, switch to Amadeus Flight Offers API which returns full flight lists.
+
+**References:** packages/api/src/search/providers/travelpayouts.provider.ts, docs/features/real-flight-prices/
+
+---

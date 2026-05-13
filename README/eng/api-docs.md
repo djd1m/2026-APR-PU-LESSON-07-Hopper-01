@@ -18,7 +18,7 @@
 ```
 Production: https://api.hopperru.ru/api
 Staging:    https://staging-api.hopperru.ru/api
-Local:      http://localhost:3000/api
+Local:      http://localhost:7101/api
 ```
 
 ### Data Format
@@ -34,14 +34,16 @@ Local:      http://localhost:3000/api
 Interactive documentation is available at:
 
 ```
-http://localhost:3000/api/docs
+http://localhost:7101/api/docs
 ```
 
 ---
 
 ## Authentication
 
-HopperRU uses JWT tokens for authentication. Primary authorization is via Telegram OAuth.
+HopperRU uses JWT tokens for authentication. Primary authorization is via email/phone (Web application) or Telegram OAuth (for VPN users).
+
+> **Note:** Since April 2026, Telegram is blocked in Russia (ADR-6). The Web application + PWA is the primary interface. Authorization via email/SMS (SMSC.ru) is recommended as the main method.
 
 ### Step 1. Authorize via Telegram
 

@@ -100,13 +100,13 @@ docker compose exec api npx prisma db seed   # staging/dev only
 docker compose ps
 
 # Check the API
-curl http://localhost:3000/health
+curl http://localhost:7101/health
 
 # Check the web application
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7100
 
 # Check Swagger documentation
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/docs
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7101/api/docs
 ```
 
 Expected results: API returns `{"status":"ok"}`, web application and Swagger return HTTP 200.
@@ -122,8 +122,9 @@ All parameters are set via environment variables in the `.env` file.
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
 | `NODE_ENV` | Runtime mode | `production` | Yes |
-| `PORT` | API server port | `3000` | Yes |
-| `WEB_PORT` | Web application port | `3001` | Yes |
+| `PORT` | API server port | `7101` | Yes |
+| `WEB_PORT` | Web application port | `7100` | Yes |
+| `ML_PORT` | ML service port | `9102` | Yes |
 
 ### Database
 
@@ -157,19 +158,29 @@ All parameters are set via environment variables in the `.env` file.
 | `JWT_REFRESH_TTL` | Refresh token lifetime | `7d` | No |
 | `ENCRYPTION_MASTER_KEY` | Encryption master key | `(hex, 64 characters)` | Yes |
 
-### Telegram Bot
+### Telegram Bot (optional -- ADR-6)
+
+> **Important:** Telegram is blocked in Russia since April 2026 (ADR-6). The Web app + PWA is the PRIMARY interface. Telegram Bot is optional for VPN users.
 
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
-| `TELEGRAM_BOT_TOKEN` | Bot token from @BotFather | `123456:ABC-DEF1234ghIkl-zyx` | Yes |
-| `TELEGRAM_WEBHOOK_URL` | Webhook URL | `https://api.hopperru.ru/bot/webhook` | Yes (prod) |
-| `TELEGRAM_WEBHOOK_SECRET` | Webhook verification secret | `random_secret_string` | Yes (prod) |
+| `TELEGRAM_BOT_TOKEN` | Bot token from @BotFather | `123456:ABC-DEF1234ghIkl-zyx` | No (optional) |
+| `TELEGRAM_WEBHOOK_URL` | Webhook URL | `https://api.hopperru.ru/bot/webhook` | No |
+| `TELEGRAM_WEBHOOK_SECRET` | Webhook verification secret | `random_secret_string` | No |
+
+### SMS Notifications (SMSC.ru)
+
+| Variable | Description | Example | Required |
+|----------|-------------|---------|----------|
+| `SMSC_LOGIN` | SMSC.ru login | `my_login` | Yes |
+| `SMSC_PASSWORD` | SMSC.ru password | `my_password` | Yes |
+| `SMSC_SENDER` | Sender name | `HopperRU` | No |
 
 ### Payments (YooKassa)
 
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
-| `YOOKASSA_SHOP_ID` | YooKassa shop ID | `123456` | Yes |
+| `YOOKASSA_SHOP_ID` | YooKassa shop ID | `1357789` | Yes |
 | `YOOKASSA_SECRET_KEY` | YooKassa secret key | `live_...` | Yes |
 | `YOOKASSA_WEBHOOK_SECRET` | Webhook verification secret | `webhook_secret` | Yes |
 | `YOOKASSA_RETURN_URL` | Return URL after payment | `https://hopperru.ru/payment/complete` | Yes |
@@ -182,13 +193,19 @@ All parameters are set via environment variables in the `.env` file.
 | `ML_MODEL_PATH` | Path to model file | `/app/models/price_v1.pkl` | No |
 | `ML_PREDICTION_TIMEOUT` | Prediction timeout (ms) | `5000` | No |
 
-### External APIs (Airlines)
+### External APIs (Airlines and Prices)
 
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
-| `AVIASALES_API_TOKEN` | Aviasales API token | `token_...` | Yes |
+| `TRAVELPAYOUTS_TOKEN` | Travelpayouts Data API token | `token_...` | Yes |
+| `AMADEUS_API_KEY` | Amadeus API key | `key_...` | No (needs credentials) |
+| `AMADEUS_API_SECRET` | Amadeus API secret | `secret_...` | No |
+| `NEMO_TRAVEL_URL` | Nemo.travel BookingProvider URL | `https://...` | No (needs contract) |
+| `NEMO_TRAVEL_API_KEY` | Nemo.travel API key | `key_...` | No |
 | `AIRLINE_API_TIMEOUT` | Request timeout (ms) | `10000` | No |
 | `AIRLINE_API_RETRY_COUNT` | Number of retries | `3` | No |
+
+> **Note:** Search uses a cascading provider strategy: Amadeus (if credentials available) -> Travelpayouts (real prices) -> Mock (fallback). Nemo.travel BookingProvider is ready for integration after contract signing.
 
 ---
 
@@ -336,8 +353,8 @@ HopperRU exports metrics in Prometheus format.
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| API | `http://localhost:3000/metrics` | HTTP metrics, business metrics |
-| ML | `http://localhost:8000/metrics` | Prediction metrics |
+| API | `http://localhost:7101/metrics` | HTTP metrics, business metrics |
+| ML | `http://localhost:9102/metrics` | Prediction metrics |
 | PostgreSQL | `http://localhost:9187/metrics` | Via postgres_exporter |
 | Redis | `http://localhost:9121/metrics` | Via redis_exporter |
 | Node Exporter | `http://localhost:9100/metrics` | System metrics (CPU, RAM, disk) |
@@ -397,19 +414,19 @@ docker compose logs -f --tail=50
 
 ### Port Already in Use
 
-**Symptom:** `Error: listen EADDRINUSE: address already in use :::3000`
+**Symptom:** `Error: listen EADDRINUSE: address already in use :::7101`
 
 **Solution:**
 
 ```bash
 # Find the process using the port
-lsof -i :3000
+lsof -i :7101
 
 # Kill the process
 kill -9 <PID>
 
 # Or change the port in .env
-PORT=3002
+PORT=7102
 ```
 
 ### Database Connection Refused
@@ -491,13 +508,13 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 
 ```bash
 # Check the ML service
-curl http://localhost:8000/health
+curl http://localhost:9102/health
 
 # Check logs
 docker compose logs ml --tail=100
 
 # Check if the model is loaded
-curl http://localhost:8000/model/status
+curl http://localhost:9102/model/status
 
 # Restart
 docker compose restart ml
@@ -596,7 +613,7 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:7101;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

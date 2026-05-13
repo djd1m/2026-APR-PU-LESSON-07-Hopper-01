@@ -9,7 +9,7 @@ Get HopperRU running in 5 minutes.
 ```bash
 # 1. Clone and configure
 git clone git@github.com:your-org/hopperru.git && cd hopperru
-cp .env.example .env        # Fill in TELEGRAM_BOT_TOKEN, YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY
+cp .env.example .env        # Fill in YOOKASSA_SHOP_ID (1357789), YOOKASSA_SECRET_KEY, AMADEUS_API_KEY, SMSC_LOGIN/SMSC_PASSWORD
 
 # 2. Start all services
 docker compose up --build -d
@@ -24,15 +24,15 @@ docker compose exec api npx prisma migrate deploy
 
 ```bash
 # API
-curl http://localhost:3000/health
+curl http://localhost:7101/health
 # Expected response: {"status":"ok"}
 
-# Web application
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
+# Web application (Next.js PWA)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7100
 # Expected response: 200
 
 # Swagger documentation
-open http://localhost:3000/api/docs
+open http://localhost:7101/api/docs
 ```
 
 ---
@@ -40,7 +40,7 @@ open http://localhost:3000/api/docs
 ## First Search via API
 
 ```bash
-curl -X GET "http://localhost:3000/api/search/flights?\
+curl -X GET "http://localhost:7101/api/search/flights?\
 origin=SVO&destination=AER&departureDate=2026-07-15" \
   -H "Content-Type: application/json"
 ```
@@ -53,11 +53,27 @@ The response contains a list of flights with prices, AI predictions, and availab
 
 | Service | URL |
 |---------|-----|
-| API (NestJS) | http://localhost:3000 |
-| Web (Next.js) | http://localhost:3001 |
-| ML (FastAPI) | http://localhost:8000 |
-| Swagger Docs | http://localhost:3000/api/docs |
+| Web (Next.js PWA) | http://localhost:7100 |
+| API (NestJS) | http://localhost:7101 |
+| ML (FastAPI) | http://localhost:9102 |
+| Swagger Docs | http://localhost:7101/api/docs |
 | Grafana | http://localhost:3100 |
+
+> **Note:** Ports 7100-7101 are chosen to avoid conflicts on shared VPS (port 9100 is blocked externally). ML service is available on port 9102.
+
+---
+
+## Current Project Status
+
+- **65+ commits**, 250+ files
+- **Web-first + PWA** -- primary interface (ADR-6: Telegram blocked in Russia since April 2026)
+- **YooKassa** -- real payments in test mode (shopId=1357789)
+- **Travelpayouts** -- real flight price data integrated
+- **Amadeus API** -- integration added (credentials required)
+- **Nemo.travel BookingProvider** -- ready (contract required)
+- **SMSC.ru** -- real SMS delivery working
+- Per-feature documentation: `docs/features/`
+- 8 research documents: `docs/research/`
 
 ---
 

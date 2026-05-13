@@ -100,13 +100,13 @@ docker compose exec api npx prisma db seed   # только для staging/dev
 docker compose ps
 
 # Проверка API
-curl http://localhost:3000/health
+curl http://localhost:7101/health
 
 # Проверка веб-приложения
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7100
 
 # Проверка Swagger-документации
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/docs
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7101/api/docs
 ```
 
 Ожидаемые ответы: API возвращает `{"status":"ok"}`, веб-приложение и Swagger возвращают HTTP 200.
@@ -122,8 +122,9 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/docs
 | Переменная | Описание | Пример | Обязательна |
 |------------|----------|--------|-------------|
 | `NODE_ENV` | Режим работы | `production` | Да |
-| `PORT` | Порт API-сервера | `3000` | Да |
-| `WEB_PORT` | Порт веб-приложения | `3001` | Да |
+| `PORT` | Порт API-сервера | `7101` | Да |
+| `WEB_PORT` | Порт веб-приложения | `7100` | Да |
+| `ML_PORT` | Порт ML-сервиса | `9102` | Да |
 
 ### База данных
 
@@ -157,19 +158,29 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/docs
 | `JWT_REFRESH_TTL` | Время жизни refresh-токена | `7d` | Нет |
 | `ENCRYPTION_MASTER_KEY` | Мастер-ключ шифрования | `(hex, 64 символа)` | Да |
 
-### Telegram Bot
+### Telegram Bot (опционально -- ADR-6)
+
+> **Важно:** Telegram заблокирован в РФ с апреля 2026 (ADR-6). Web-приложение + PWA является PRIMARY интерфейсом. Telegram Bot -- опция для пользователей с VPN.
 
 | Переменная | Описание | Пример | Обязательна |
 |------------|----------|--------|-------------|
-| `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather | `123456:ABC-DEF1234ghIkl-zyx` | Да |
-| `TELEGRAM_WEBHOOK_URL` | URL для webhook | `https://api.hopperru.ru/bot/webhook` | Да (prod) |
-| `TELEGRAM_WEBHOOK_SECRET` | Секрет для верификации webhook | `random_secret_string` | Да (prod) |
+| `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather | `123456:ABC-DEF1234ghIkl-zyx` | Нет (опционально) |
+| `TELEGRAM_WEBHOOK_URL` | URL для webhook | `https://api.hopperru.ru/bot/webhook` | Нет |
+| `TELEGRAM_WEBHOOK_SECRET` | Секрет для верификации webhook | `random_secret_string` | Нет |
+
+### SMS-уведомления (SMSC.ru)
+
+| Переменная | Описание | Пример | Обязательна |
+|------------|----------|--------|-------------|
+| `SMSC_LOGIN` | Логин SMSC.ru | `my_login` | Да |
+| `SMSC_PASSWORD` | Пароль SMSC.ru | `my_password` | Да |
+| `SMSC_SENDER` | Имя отправителя | `HopperRU` | Нет |
 
 ### Платежи (YooKassa)
 
 | Переменная | Описание | Пример | Обязательна |
 |------------|----------|--------|-------------|
-| `YOOKASSA_SHOP_ID` | ID магазина в YooKassa | `123456` | Да |
+| `YOOKASSA_SHOP_ID` | ID магазина в YooKassa | `1357789` | Да |
 | `YOOKASSA_SECRET_KEY` | Секретный ключ YooKassa | `live_...` | Да |
 | `YOOKASSA_WEBHOOK_SECRET` | Секрет для верификации webhook | `webhook_secret` | Да |
 | `YOOKASSA_RETURN_URL` | URL возврата после оплаты | `https://hopperru.ru/payment/complete` | Да |
@@ -182,13 +193,19 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/docs
 | `ML_MODEL_PATH` | Путь к модели | `/app/models/price_v1.pkl` | Нет |
 | `ML_PREDICTION_TIMEOUT` | Таймаут предсказания (мс) | `5000` | Нет |
 
-### Внешние API (авиакомпании)
+### Внешние API (авиакомпании и цены)
 
 | Переменная | Описание | Пример | Обязательна |
 |------------|----------|--------|-------------|
-| `AVIASALES_API_TOKEN` | Токен Aviasales API | `token_...` | Да |
+| `TRAVELPAYOUTS_TOKEN` | Токен Travelpayouts Data API | `token_...` | Да |
+| `AMADEUS_API_KEY` | Ключ Amadeus API | `key_...` | Нет (нужны credentials) |
+| `AMADEUS_API_SECRET` | Секрет Amadeus API | `secret_...` | Нет |
+| `NEMO_TRAVEL_URL` | URL Nemo.travel BookingProvider | `https://...` | Нет (нужен контракт) |
+| `NEMO_TRAVEL_API_KEY` | Ключ API Nemo.travel | `key_...` | Нет |
 | `AIRLINE_API_TIMEOUT` | Таймаут запроса к API (мс) | `10000` | Нет |
 | `AIRLINE_API_RETRY_COUNT` | Количество повторных попыток | `3` | Нет |
+
+> **Примечание:** Поиск использует каскадную стратегию провайдеров: Amadeus (если credentials) -> Travelpayouts (реальные цены) -> Mock (fallback). Nemo.travel BookingProvider готов к интеграции после подписания контракта.
 
 ---
 
@@ -336,8 +353,8 @@ HopperRU экспортирует метрики в формате Prometheus.
 
 | Сервис | URL | Описание |
 |--------|-----|----------|
-| API | `http://localhost:3000/metrics` | HTTP-метрики, бизнес-метрики |
-| ML | `http://localhost:8000/metrics` | Метрики предсказаний |
+| API | `http://localhost:7101/metrics` | HTTP-метрики, бизнес-метрики |
+| ML | `http://localhost:9102/metrics` | Метрики предсказаний |
 | PostgreSQL | `http://localhost:9187/metrics` | Через postgres_exporter |
 | Redis | `http://localhost:9121/metrics` | Через redis_exporter |
 | Node Exporter | `http://localhost:9100/metrics` | Системные метрики (CPU, RAM, диск) |
@@ -397,19 +414,19 @@ docker compose logs -f --tail=50
 
 ### Порт занят
 
-**Симптом:** `Error: listen EADDRINUSE: address already in use :::3000`
+**Симптом:** `Error: listen EADDRINUSE: address already in use :::7101`
 
 **Решение:**
 
 ```bash
 # Найти процесс, занимающий порт
-lsof -i :3000
+lsof -i :7101
 
 # Остановить процесс
 kill -9 <PID>
 
 # Или изменить порт в .env
-PORT=3002
+PORT=7102
 ```
 
 ### Database connection refused
@@ -491,13 +508,13 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 
 ```bash
 # Проверить ML-сервис
-curl http://localhost:8000/health
+curl http://localhost:9102/health
 
 # Проверить логи
 docker compose logs ml --tail=100
 
 # Проверить, что модель загружена
-curl http://localhost:8000/model/status
+curl http://localhost:9102/model/status
 
 # Перезапуск
 docker compose restart ml
@@ -596,7 +613,7 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:7101;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

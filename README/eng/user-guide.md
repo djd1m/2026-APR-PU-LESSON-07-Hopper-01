@@ -16,21 +16,24 @@
 
 ## Getting Started
 
-### Telegram Bot
+### Web Application (primary method)
 
-The fastest way to start is through the Telegram bot:
+> **Important:** Since April 2026, Telegram is blocked in Russia (ADR-6). The Web application + PWA is the PRIMARY interface for HopperRU.
+
+1. Go to [hopperru.ru](https://hopperru.ru)
+2. Click **"Sign Up"** (email or phone number)
+3. Confirm registration via SMS (through SMSC.ru) or email
+4. You will be redirected to your personal account with access to all features
+5. Install as PWA: in your browser, tap "Add to Home Screen" for a native-like mobile experience
+
+### Telegram Bot (optional, for VPN users)
+
+The Telegram bot is available for users with VPN (~65M Russians use VPN):
 
 1. Open Telegram and find **@HopperRU_bot**
 2. Tap **"Start"** (or send `/start`)
 3. The bot will ask you to authorize -- confirm your phone number
 4. Done! Send `/search` to find your first flight
-
-### Web Application
-
-1. Go to [hopperru.ru](https://hopperru.ru)
-2. Click **"Log in via Telegram"**
-3. Confirm authorization in Telegram
-4. You will be redirected to your personal account with access to all features
 
 ---
 
@@ -371,7 +374,7 @@ Send `/delete_account` in the Telegram bot or write to support@hopperru.ru. Your
 
 ### 9. Is there a mobile app?
 
-Currently, HopperRU is available via the Telegram bot and the web application. A mobile app for iOS and Android is planned for future releases.
+HopperRU is available as a PWA (Progressive Web App) -- install the web application to your home screen for a native-like mobile experience. The Telegram bot is available optionally (for VPN users). A native app for iOS and Android is planned for future releases.
 
 ### 10. Where can I get support?
 
