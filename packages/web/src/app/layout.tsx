@@ -3,6 +3,8 @@
 import { Inter } from 'next/font/google';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useServiceWorker } from '../hooks/useServiceWorker';
+import { InstallPrompt } from '../components/InstallPrompt';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
@@ -24,6 +26,9 @@ export default function RootLayout({
       })
   );
 
+  // Register service worker for PWA offline support and push notifications
+  const { hasUpdate, applyUpdate } = useServiceWorker();
+
   return (
     <html lang="ru">
       <head>
@@ -34,6 +39,14 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <QueryClientProvider client={queryClient}>
+          {hasUpdate && (
+            <div className="bg-primary-500 text-white text-center py-2 px-4 text-sm">
+              Доступно обновление.{' '}
+              <button onClick={applyUpdate} className="underline font-medium">
+                Обновить сейчас
+              </button>
+            </div>
+          )}
           <header className="bg-white border-b border-gray-200">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
               <a href="/" className="text-2xl font-bold text-primary-500">
@@ -76,6 +89,7 @@ export default function RootLayout({
               </div>
             </div>
           </footer>
+          <InstallPrompt />
         </QueryClientProvider>
       </body>
     </html>
