@@ -57,7 +57,10 @@ export class AuthService {
       },
     });
 
-    // Send SMS via SMS.ru API (or fall back to mock if no API key)
+    // Always log code for debugging (remove in production!)
+    this.logger.log(`[AUTH] Code ${code} for ${normalizedPhone}`);
+
+    // Send SMS via SMSC.ru (or fall back to mock if no credentials)
     await this.sendSmsCode(normalizedPhone, code);
 
     return { message: 'Код подтверждения отправлен' };
