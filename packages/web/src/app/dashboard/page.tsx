@@ -7,11 +7,13 @@ import AuthGuard from '@/components/AuthGuard';
 interface DashboardData {
   bookings: {
     id: string;
-    origin: string;
-    destination: string;
-    departure_at: string;
     status: string;
-    total_price: number;
+    pnr: string;
+    total_price: number | { amount: number; currency: string };
+    created_at: string;
+    flights: { airline: string; flight_number: string; origin: string; destination: string; departure_at: string }[];
+    passengers: { first_name: string; last_name: string }[];
+    protections: { type: string; status: string }[];
   }[];
   total_savings: number;
   alerts: {
@@ -81,7 +83,7 @@ function DashboardContent() {
         <div className="card">
           <p className="text-sm text-gray-500 mb-1">Активные бронирования</p>
           <p className="text-3xl font-bold text-primary-500">
-            {data?.bookings?.filter((b) => ['CONFIRMED', 'TICKETED'].includes(b.status)).length || 0}
+            {data?.bookings?.filter((b) => ['confirmed', 'pending'].includes(b.status)).length || 0}
           </p>
         </div>
         <div className="card">
@@ -109,17 +111,21 @@ function DashboardContent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">
-                        {booking.origin} &rarr; {booking.destination}
+                        {booking.flights?.[0]?.airline || ''} {booking.flights?.[0]?.flight_number || ''}
+                        {booking.pnr ? ` · PNR: ${booking.pnr}` : ''}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {new Date(booking.departure_at).toLocaleDateString('ru-RU')}
+                        {booking.created_at ? new Date(booking.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{formatPrice(booking.total_price)}</p>
+                      <p className="font-semibold">
+                        {formatPrice(typeof booking.total_price === 'object' ? (booking.total_price as any)?.amount || 0 : booking.total_price || 0)}
+                      </p>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                        booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                        booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                        booking.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                         'bg-gray-100 text-gray-600'
                       }`}>
                         {translateStatus(booking.status)}
