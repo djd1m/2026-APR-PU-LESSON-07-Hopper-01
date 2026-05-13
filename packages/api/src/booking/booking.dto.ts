@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsUUID,
   IsArray,
   IsOptional,
   IsIn,
@@ -53,12 +52,12 @@ export class ProtectionRequestDto {
 
 export class CreateBookingDto {
   @ApiProperty({ description: 'Flight ID to book' })
-  @IsUUID()
+  @IsString()
   flight_id!: string;
 
   @ApiPropertyOptional({ description: 'Price freeze ID to apply' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   freeze_id?: string;
 
   @ApiProperty({ type: [PassengerDto], description: 'Passenger details' })
