@@ -7,6 +7,7 @@ import { SearchForm } from '@/components/SearchForm';
 import { FlightCard } from '@/components/FlightCard';
 import { PriceCalendar } from '@/components/PriceCalendar';
 import { apiClient } from '@/lib/api';
+import type { PredictionData } from '@/components/PredictionBadge';
 
 type SortOption = 'price' | 'duration' | 'departure';
 
@@ -25,10 +26,7 @@ interface Flight {
   currency: string;
   available_seats: number;
   cabin_class: string;
-  prediction?: {
-    recommendation: 'BUY_NOW' | 'WAIT' | 'NO_DATA';
-    confidence: number;
-  };
+  prediction?: PredictionData;
 }
 
 interface SearchResponse {
@@ -44,6 +42,19 @@ interface CalendarDay {
   date: string;
   min_price: number;
   tier: 'green' | 'yellow' | 'red';
+}
+
+interface PredictionApiResponse {
+  prediction: PredictionData & {
+    route: { origin: string; destination: string };
+    departure_date: string;
+    current_price: { amount: number; currency: string };
+    action: string;
+    model_version: string;
+    factors: Array<{ name: string; weight: number; direction: string; value?: string }>;
+  };
+  generated_at: string;
+  next_update_at: string;
 }
 
 export default function SearchPage() {
@@ -68,6 +79,50 @@ export default function SearchPage() {
     enabled: hasSearchParams,
   });
 
+  const flights = data?.flights || [];
+
+  // Fetch predictions for all flights (batch by unique prices)
+  const { data: predictionsMap } = useQuery({
+    queryKey: ['predictions', origin, destination, date, flights.map((f) => f.price).join(',')],
+    queryFn: async () => {
+      if (!flights.length) return {};
+
+      // Fetch predictions for each unique price point
+      const uniquePrices = [...new Set(flights.map((f) => f.price))];
+      const predictions: Record<number, PredictionData> = {};
+
+      await Promise.allSettled(
+        uniquePrices.map(async (price) => {
+          try {
+            const resp = await apiClient<PredictionApiResponse>(
+              `/predict?origin=${origin}&destination=${destination}&date=${date}&current_price=${price}`
+            );
+            predictions[price] = {
+              recommendation: resp.prediction.action as PredictionData['recommendation'],
+              confidence: resp.prediction.confidence,
+              explanation: resp.prediction.explanation,
+              expected_savings: resp.prediction.expected_savings,
+              wait_days: resp.prediction.wait_days,
+              predicted_change_pct: resp.prediction.predicted_change_pct,
+            };
+          } catch {
+            // Prediction unavailable for this price — skip
+          }
+        })
+      );
+
+      return predictions;
+    },
+    enabled: flights.length > 0,
+    staleTime: 6 * 60 * 60 * 1000, // 6 hours — matches server cache TTL
+  });
+
+  // Merge predictions into flights
+  const flightsWithPredictions = flights.map((flight) => ({
+    ...flight,
+    prediction: predictionsMap?.[flight.price] ?? flight.prediction,
+  }));
+
   // Fetch calendar data for the month
   const calendarMonth = date ? date.substring(0, 7) : '';
   const { data: calendarData } = useQuery({
@@ -79,10 +134,8 @@ export default function SearchPage() {
     enabled: !!(origin && destination && calendarMonth),
   });
 
-  const flights = data?.flights || [];
-
   // Apply sort
-  const sortedFlights = [...flights].sort((a, b) => {
+  const sortedFlights = [...flightsWithPredictions].sort((a, b) => {
     switch (sortBy) {
       case 'price':
         return a.price - b.price;

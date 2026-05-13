@@ -1,6 +1,6 @@
 'use client';
 
-import { PredictionBadge } from './PredictionBadge';
+import { PredictionBadge, type PredictionData } from './PredictionBadge';
 
 interface Flight {
   id: string;
@@ -13,10 +13,7 @@ interface Flight {
   duration_min: number;
   stops: number;
   price: number;
-  prediction?: {
-    recommendation: 'BUY_NOW' | 'WAIT' | 'NO_DATA';
-    confidence: number;
-  };
+  prediction?: PredictionData;
 }
 
 const AIRLINE_NAMES: Record<string, string> = {
@@ -48,6 +45,11 @@ export function FlightCard({ flight }: { flight: Flight }) {
         : `${flight.stops} пересадки`;
 
   const airlineName = AIRLINE_NAMES[flight.airline] || flight.airline;
+
+  const handleFreeze = () => {
+    // Navigate to freeze flow
+    window.location.href = `/freeze/${flight.id}`;
+  };
 
   return (
     <a
@@ -90,8 +92,8 @@ export function FlightCard({ flight }: { flight: Flight }) {
         {flight.prediction && (
           <div className="mt-1">
             <PredictionBadge
-              recommendation={flight.prediction.recommendation}
-              confidence={flight.prediction.confidence}
+              prediction={flight.prediction}
+              onFreeze={handleFreeze}
             />
           </div>
         )}
