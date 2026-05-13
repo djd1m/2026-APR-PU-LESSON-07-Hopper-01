@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../common/redis.service';
+import { YooKassaService } from '../payment/yookassa.service';
 import {
   CreateBookingDto,
   BookingResponseDto,
@@ -80,6 +81,7 @@ export class BookingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly yookassa: YooKassaService,
   ) {}
 
   /**
@@ -178,16 +180,19 @@ export class BookingService {
     // Step 4: Calculate total
     const totalPrice = flightPrice + protectionTotal;
 
-    // Step 5: Simulate YooKassa payment
-    const paymentResult = simulatePayment();
+    // Step 5: Create payment via YooKassa (real or mock)
+    const paymentResult = await this.yookassa.createPayment(
+      totalPrice,
+      'RUB',
+      `HopperRU: ${flight.airline || ''} ${flight.flight_number || ''} ${flight.origin || ''}-${flight.destination || ''}`,
+      { booking_flight: dto.flight_id },
+    );
 
-    if (!paymentResult.success) {
-      throw new BadRequestException(
-        'Оплата не прошла. Попробуйте другой способ оплаты.',
-      );
-    }
+    // If YooKassa returns a redirect URL, booking is PENDING until paid
+    const isPending = !!paymentResult.confirmation_url;
+    const bookingStatus = isPending ? BookingStatus.PENDING : BookingStatus.CONFIRMED;
 
-    // Step 6: Generate PNR (mock: 6-char alphanumeric)
+    // Step 6: Generate PNR
     const pnr = generatePnr();
 
     // Step 7: Create Booking + BookingItem + Passengers in a transaction
@@ -197,10 +202,10 @@ export class BookingService {
         data: {
           user_id: userId,
           type: 'FLIGHT',
-          status: BookingStatus.CONFIRMED,
+          status: bookingStatus,
           total_price: totalPrice,
           currency: 'RUB',
-          payment_id: paymentResult.paymentId,
+          payment_id: paymentResult.id,
           payment_method: toPaymentMethod(dto.payment_method),
           pnr,
           confirmed_at: new Date(),
@@ -254,10 +259,11 @@ export class BookingService {
     );
 
     // Build response
-    const response: BookingResponseDto = {
+    const response: any = {
       id: booking.id,
-      status: 'confirmed',
+      status: isPending ? 'pending' : 'confirmed',
       pnr,
+      payment_url: paymentResult.confirmation_url || null,
       total_price: { amount: totalPrice, currency: 'RUB' },
       breakdown: {
         flight: { amount: flightPrice, currency: 'RUB' },
