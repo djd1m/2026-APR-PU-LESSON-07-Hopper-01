@@ -29,18 +29,26 @@ function DashboardContent() {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
-      const [me, savings] = await Promise.allSettled([
+      const [me, savings, bookingsResp, alertsResp] = await Promise.allSettled([
         apiClient<{ id: string; name: string; phone: string }>('/user/me'),
-        apiClient<{ total_savings: number }>('/user/savings'),
+        apiClient<any>('/user/savings'),
+        apiClient<any>('/bookings'),
+        apiClient<any>('/user/alerts'),
       ]);
+
+      const rawSavings = savings.status === 'fulfilled' ? savings.value : null;
+      const totalSavings = rawSavings?.total_savings;
+
+      const rawBookings = bookingsResp.status === 'fulfilled' ? bookingsResp.value : null;
+      const bookings = Array.isArray(rawBookings) ? rawBookings : (rawBookings?.bookings || []);
+
+      const rawAlerts = alertsResp.status === 'fulfilled' ? alertsResp.value : null;
+      const alerts = Array.isArray(rawAlerts) ? rawAlerts : (rawAlerts?.alerts || []);
+
       return {
-        bookings: [],
-        total_savings: savings.status === 'fulfilled'
-          ? (typeof (savings.value as any)?.total_savings === 'object'
-              ? (savings.value as any).total_savings?.amount || 0
-              : (savings.value as any)?.total_savings || 0)
-          : 0,
-        alerts: [],
+        bookings,
+        total_savings: typeof totalSavings === 'object' ? (totalSavings?.amount || 0) : (totalSavings || 0),
+        alerts,
         referral_code: '',
       } as unknown as DashboardData;
     },
