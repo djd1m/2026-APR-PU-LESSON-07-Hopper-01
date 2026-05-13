@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://212.192.0.33:9100/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://212.192.0.33:7101/api';
 
 /**
  * Get access token from localStorage (browser only).
