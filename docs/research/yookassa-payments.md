@@ -142,14 +142,64 @@ YOOKASSA_RETURN_URL=  # URL возврата после оплаты (default: /
 
 ## Активация
 
+### Пошаговая инструкция
+
+**Шаг 1: Регистрация в YooKassa (2 минуты)**
+
+1. Открыть [yookassa.ru/joinups?createTestShop=true](https://yookassa.ru/joinups?createTestShop=true)
+2. Ввести email, номер телефона, подтвердить SMS
+3. На шаге выбора типа подключения — нажать **"Тестирование"** (не "Продолжить регистрацию")
+4. Вы попадёте в личный кабинет YooKassa
+
+**Шаг 2: Создание тестового магазина**
+
+1. В личном кабинете [yookassa.ru/my/](https://yookassa.ru/my/) → нажать **"Добавить магазин"**
+2. Выбрать тип: **"Тестовый магазин"**
+3. Магазин появится в течение 1 минуты (макс. 20 тестовых магазинов)
+
+**Шаг 3: Получение credentials**
+
+1. Перейти в настройки тестового магазина
+2. **Shop ID** — виден в разделе "Настройки → Магазин" (поле `shopId`)
+3. **Secret Key** — получить в разделе "Интеграция → Ключи API" → нажать "Выпустить ключ"
+
+**Шаг 4: Прописать в проекте**
+
 ```bash
-# 1. Зарегистрировать тестовый магазин (бесплатно)
-# https://yookassa.ru/joinups?createTestShop=true
-
-# 2. Добавить в .env
-YOOKASSA_SHOP_ID=12345
-YOOKASSA_SECRET=test_secret_key_from_dashboard
-
-# 3. Перезапустить API
-# 4. При бронировании пользователь будет перенаправлен на YooKassa для оплаты
+# Добавить в .env
+YOOKASSA_SHOP_ID=ваш_shop_id_из_шага_3
+YOOKASSA_SECRET=ваш_secret_key_из_шага_3
 ```
+
+**Шаг 5: Перезапустить API**
+
+```bash
+kill $(lsof -ti:7101); sleep 1
+set -a && source .env && set +a
+DATABASE_URL="postgresql://hopperru:${DB_PASSWORD}@127.0.0.1:${PG_PORT}/hopperru" \
+REDIS_URL="redis://127.0.0.1:${REDIS_PORT}" \
+ML_SERVICE_URL="http://127.0.0.1:${ML_PORT}" \
+TRAVELPAYOUTS_TOKEN="${TRAVELPAYOUTS_TOKEN}" \
+SMSC_LOGIN="${SMSC_LOGIN}" SMSC_PASSWORD="${SMSC_PASSWORD}" \
+JWT_SECRET="${JWT_SECRET}" \
+YOOKASSA_SHOP_ID="${YOOKASSA_SHOP_ID}" YOOKASSA_SECRET="${YOOKASSA_SECRET}" \
+NODE_ENV=production PORT=7101 \
+nohup node packages/api/dist/main.js > /tmp/hopperru-api.log 2>&1 &
+```
+
+**Шаг 6: Проверить**
+
+При бронировании рейса пользователь будет перенаправлен на страницу оплаты YooKassa. Используйте тестовые карты:
+
+| Карта | Номер | CVV | Срок | Результат |
+|-------|-------|-----|------|-----------|
+| Visa | `4111 1111 1111 1111` | любой | любой будущий | Успешная оплата |
+| Mastercard | `5555 5555 5555 4444` | любой | любой будущий | Успешная оплата |
+| MIR (3D Secure) | `2200 0000 0000 0004` | любой | любой будущий | Успех с 3DS |
+| MC (нет средств) | `5555 5555 5555 4642` | любой | любой будущий | Отказ |
+| MC (просрочена) | `5555 5555 5555 4543` | любой | любой будущий | Отказ |
+| MC (неверный CVC) | `5555 5555 5555 4626` | любой | любой будущий | Отказ |
+
+После оплаты пользователь будет возвращён на `/bookings`.
+
+> **Важно:** тестовый магазин использует те же API endpoints что и production. Разница только в credentials — тестовые ключи автоматически включают тестовый режим. В ответах API будет поле `"test": true`.
