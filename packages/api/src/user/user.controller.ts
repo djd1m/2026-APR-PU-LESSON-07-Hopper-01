@@ -52,6 +52,20 @@ export class UserController {
     return this.userService.getSavings(req.user.sub);
   }
 
+  @Get('bookings')
+  @ApiOperation({ summary: 'Get booking history' })
+  @ApiOkResponse({ description: 'List of user bookings' })
+  async getBookingHistory(@Req() req: Request & { user: { sub: string } }) {
+    return this.userService.getBookingHistory(req.user.sub);
+  }
+
+  @Get('referral')
+  @ApiOperation({ summary: 'Get referral program statistics and code' })
+  @ApiOkResponse({ description: 'Referral stats and code' })
+  async getReferralStats(@Req() req: Request & { user: { sub: string } }) {
+    return this.userService.getReferralStats(req.user.sub);
+  }
+
   @Get('alerts')
   @ApiOperation({ summary: 'Get active price alerts' })
   @ApiOkResponse({ description: 'List of price alerts' })
