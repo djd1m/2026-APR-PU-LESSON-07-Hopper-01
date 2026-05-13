@@ -1,13 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ];
+  },
 
   async rewrites() {
-    const apiUrl = process.env.API_URL || 'http://localhost:3000';
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        destination: 'http://212.192.0.33:9100/api/:path*',
       },
     ];
   },
