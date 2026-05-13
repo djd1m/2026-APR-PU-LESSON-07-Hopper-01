@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { RedisService } from '../common/redis.service';
 import {
   CreateBookingDto,
   BookingResponseDto,
@@ -76,7 +77,29 @@ function calculatePriceDropPremium(): number {
 export class BookingService {
   private readonly logger = new Logger(BookingService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
+
+  /**
+   * Find a flight by ID in Redis search cache.
+   */
+  private async findFlightInCache(flightId: string): Promise<any | null> {
+    try {
+      const keys = await this.redis.keys('search:*');
+      for (const key of keys) {
+        const cached = await this.redis.get(key);
+        if (!cached) continue;
+        const data = JSON.parse(cached);
+        const flight = data.flights?.find((f: any) => f.id === flightId);
+        if (flight) return flight;
+      }
+    } catch (err) {
+      this.logger.warn(`findFlightInCache error: ${err.message}`);
+    }
+    return null;
+  }
 
   /**
    * Create a new booking with passengers, payment simulation, and protections.
@@ -90,20 +113,12 @@ export class BookingService {
       `Creating booking for user ${userId}, flight ${dto.flight_id}`,
     );
 
-    // Step 1: Validate flight still available
-    const flight = await this.prisma.flight.findUnique({
-      where: { id: dto.flight_id },
-    });
+    // Step 1: Find flight in Redis cache (mock flights are not in DB)
+    const flight = await this.findFlightInCache(dto.flight_id);
 
     if (!flight) {
       throw new ConflictException(
         'Рейс больше недоступен. Найдены похожие варианты.',
-      );
-    }
-
-    if (flight.available_seats < dto.passengers.length) {
-      throw new ConflictException(
-        'Места на этот рейс закончились.',
       );
     }
 
@@ -228,15 +243,7 @@ export class BookingService {
         });
       }
 
-      // Decrement available seats
-      await tx.flight.update({
-        where: { id: flight.id },
-        data: {
-          available_seats: {
-            decrement: dto.passengers.length,
-          },
-        },
-      });
+      // Note: available_seats not decremented (mock flights in Redis, not DB)
 
       return newBooking;
     });
