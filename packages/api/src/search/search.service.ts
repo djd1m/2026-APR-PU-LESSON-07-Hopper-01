@@ -120,6 +120,26 @@ export class SearchService {
   }
 
   /**
+   * Get a single flight by ID from Redis search cache.
+   * Scans all cached search results to find the flight.
+   */
+  async getFlightById(id: string): Promise<any | null> {
+    try {
+      const keys = await this.redis.keys('search:*');
+      for (const key of keys) {
+        const cached = await this.redis.get(key);
+        if (!cached) continue;
+        const data = JSON.parse(cached);
+        const flight = data.flights?.find((f: any) => f.id === id);
+        if (flight) return flight;
+      }
+    } catch (err) {
+      this.logger.warn(`getFlightById error: ${err.message}`);
+    }
+    return null;
+  }
+
+  /**
    * Get cheapest prices per day for a given route and month.
    * Color-codes: cheapest 20% green, middle 60% yellow, top 20% red.
    */

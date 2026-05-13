@@ -24,7 +24,7 @@ import { Request } from 'express';
 @ApiTags('user')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/user')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

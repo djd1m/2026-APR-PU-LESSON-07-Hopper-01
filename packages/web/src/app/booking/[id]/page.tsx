@@ -82,7 +82,7 @@ export default function BookingPage() {
 
   const { data: flight, isLoading } = useQuery({
     queryKey: ['flight', id],
-    queryFn: () => apiClient<BookingFlight>(`/flights/${id}`),
+    queryFn: () => apiClient<BookingFlight>(`/search/flights/${id}`),
     enabled: !!id,
   });
 

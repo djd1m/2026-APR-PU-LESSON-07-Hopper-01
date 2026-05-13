@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery } from '@nestjs/swagger'
 import { PredictionService } from './prediction.service';
 
 @ApiTags('prediction')
-@Controller('api/predict')
+@Controller('predict')
 export class PredictionController {
   constructor(private readonly predictionService: PredictionService) {}
 

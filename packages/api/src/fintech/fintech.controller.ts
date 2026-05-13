@@ -23,7 +23,7 @@ import { Request } from 'express';
 @ApiTags('fintech')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api')
+@Controller('fintech')
 export class FintechController {
   constructor(private readonly fintechService: FintechService) {}
 

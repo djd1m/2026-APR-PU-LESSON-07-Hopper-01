@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 import { SearchService } from './search.service';
 import {
@@ -9,7 +9,7 @@ import {
 } from './search.dto';
 
 @ApiTags('search')
-@Controller('api/search')
+@Controller('search')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
@@ -43,5 +43,13 @@ export class SearchController {
   @ApiOkResponse({ description: 'Daily minimum prices with color-coded tiers', type: CalendarResultDto })
   async getCalendar(@Query() dto: SearchCalendarDto): Promise<CalendarResultDto> {
     return this.searchService.getCalendar(dto);
+  }
+
+  @Get('flights/:id')
+  @ApiOperation({ summary: 'Get flight details by ID' })
+  async getFlightById(@Param('id') id: string) {
+    const flight = await this.searchService.getFlightById(id);
+    if (!flight) throw new NotFoundException('Рейс не найден');
+    return flight;
   }
 }

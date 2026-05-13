@@ -83,22 +83,24 @@ enum AlertStatus {
 
 model User {
   id           String    @id @default(uuid()) @db.Uuid
-  telegram_id  String?   @unique
-  email        String?
-  phone        String?
-  name         String
-  home_airport String    @default("SVO") @db.VarChar(3)
-  preferences  Json      @default("{}")
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-  deleted_at   DateTime?
+  telegram_id          String?   @unique
+  email                String?
+  phone                String?   @unique
+  name                 String
+  home_airport         String    @default("SVO") @db.VarChar(3)
+  preferences          Json      @default("{}")
+  verification_code    String?
+  verification_expires DateTime?
+  refresh_token_hash   String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
 
   bookings     Booking[]
   price_freezes PriceFreeze[]
   price_alerts PriceAlert[]
 
-  @@index([telegram_id])
-  @@index([email])
+  @@index([phone])
   @@index([deleted_at])
   @@map("users")
 }

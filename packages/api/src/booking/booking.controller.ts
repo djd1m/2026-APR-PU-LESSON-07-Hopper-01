@@ -24,7 +24,7 @@ import { Request } from 'express';
 @ApiTags('booking')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/bookings')
+@Controller('bookings')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
