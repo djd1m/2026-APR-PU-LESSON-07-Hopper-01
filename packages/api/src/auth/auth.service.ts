@@ -57,10 +57,8 @@ export class AuthService {
       },
     });
 
-    // Mock SMS sending — in production, integrate with SMS provider (e.g., SMS.ru, SMSC)
-    this.logger.log(
-      `[MOCK SMS] Code ${code} sent to ${normalizedPhone}`,
-    );
+    // Send SMS via SMS.ru API (or fall back to mock if no API key)
+    await this.sendSmsCode(normalizedPhone, code);
 
     return { message: 'Код подтверждения отправлен' };
   }
@@ -243,5 +241,38 @@ export class AuthService {
       'JWT_REFRESH_SECRET',
       'dev-refresh-secret-change-me',
     );
+  }
+
+  /**
+   * Send SMS code via SMS.ru API.
+   * Falls back to mock (log) if SMSRU_API_KEY is not set.
+   * Docs: https://sms.ru/api/send
+   */
+  private async sendSmsCode(phone: string, code: string): Promise<void> {
+    const apiKey = this.configService.get<string>('SMSRU_API_KEY');
+
+    if (!apiKey) {
+      this.logger.warn(
+        `[MOCK SMS] No SMSRU_API_KEY set. Code ${code} for ${phone} (set SMSRU_API_KEY in .env for real SMS)`,
+      );
+      return;
+    }
+
+    const message = `HopperRU: ваш код подтверждения ${code}. Не сообщайте его никому.`;
+    const url = `https://sms.ru/sms/send?api_id=${apiKey}&to=${encodeURIComponent(phone)}&msg=${encodeURIComponent(message)}&json=1`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      const data = await response.json();
+
+      if (data.status === 'OK') {
+        this.logger.log(`[SMS.ru] Code sent to ${phone}, cost: ${data.sms?.[phone]?.cost || '?'} RUB`);
+      } else {
+        this.logger.error(`[SMS.ru] Failed to send to ${phone}: ${JSON.stringify(data)}`);
+        // Don't throw — user should still see "code sent", we log the error
+      }
+    } catch (err) {
+      this.logger.error(`[SMS.ru] Network error sending to ${phone}: ${err.message}`);
+    }
   }
 }

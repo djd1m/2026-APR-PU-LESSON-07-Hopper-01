@@ -1,21 +1,36 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://212.192.0.33:9100/api';
 
 /**
+ * Get access token from localStorage (browser only).
+ */
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('hopperru_access_token');
+}
+
+/**
  * Typed fetch wrapper for internal API calls.
- * Automatically prepends the base URL and parses JSON responses.
+ * Automatically prepends the base URL, attaches JWT, and parses JSON.
  */
 export async function apiClient<T = unknown>(
   path: string,
   init?: RequestInit
 ): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
+  const token = getToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   const response = await fetch(url, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
