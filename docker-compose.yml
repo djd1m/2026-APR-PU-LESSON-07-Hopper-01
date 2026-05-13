@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
       target: api
     ports:
-      - "3000:3000"
+      - "${API_PORT:-9100}:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://hopperru:${DB_PASSWORD}@postgres:5432/hopperru
@@ -16,10 +16,11 @@ services:
       - CLICKHOUSE_URL=http://clickhouse:8123
       - YOOKASSA_SHOP_ID=${YOOKASSA_SHOP_ID}
       - YOOKASSA_SECRET=${YOOKASSA_SECRET}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - JWT_SECRET=${JWT_SECRET}
-      - INSURANCE_PARTNER_API_URL=${INSURANCE_PARTNER_API_URL}
-      - INSURANCE_PARTNER_API_KEY=${INSURANCE_PARTNER_API_KEY}
+      - ML_SERVICE_URL=http://ml:8000
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_EMAIL=${VAPID_EMAIL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,37 +35,16 @@ services:
     networks:
       - hopperru
 
-  # ─── Web Frontend (Next.js) ────────────────────────────────
+  # ─── Web Frontend (Next.js + PWA) ─────────────────────────
   web:
     build:
       context: .
       dockerfile: Dockerfile
       target: web
     ports:
-      - "3001:3000"
+      - "${WEB_PORT:-9101}:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://api:3000
-      - NODE_ENV=production
-    depends_on:
-      - api
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 512M
-    networks:
-      - hopperru
-
-  # ─── Telegram Bot (telegraf.js) ────────────────────────────
-  bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: bot
-    environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - API_URL=http://api:3000
       - NODE_ENV=production
     depends_on:
       - api
@@ -84,7 +64,7 @@ services:
       dockerfile: Dockerfile
       target: ml
     ports:
-      - "8000:8000"
+      - "${ML_PORT:-9102}:8000"
     environment:
       - DATABASE_URL=postgresql://hopperru:${DB_PASSWORD}@postgres:5432/hopperru
       - REDIS_URL=redis://redis:6379
@@ -114,9 +94,9 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=hopperru
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${PG_PORT:-9103}:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - hopperru-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hopperru"]
       interval: 5s
@@ -135,9 +115,9 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:${REDIS_PORT:-9104}:6379"
     volumes:
-      - redis-data:/data
+      - hopperru-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -156,10 +136,10 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:24-alpine
     ports:
-      - "8123:8123"
-      - "9000:9000"
+      - "127.0.0.1:${CH_HTTP_PORT:-9105}:8123"
+      - "127.0.0.1:${CH_NATIVE_PORT:-9106}:9000"
     volumes:
-      - clickhouse-data:/var/lib/clickhouse
+      - hopperru-clickhouse-data:/var/lib/clickhouse
     environment:
       - CLICKHOUSE_USER=hopperru
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
@@ -173,26 +153,10 @@ services:
     networks:
       - hopperru
 
-  # ─── Nginx Reverse Proxy ───────────────────────────────────
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro
-    depends_on:
-      - api
-      - web
-    restart: unless-stopped
-    networks:
-      - hopperru
-
 volumes:
-  postgres-data:
-  redis-data:
-  clickhouse-data:
+  hopperru-postgres-data:
+  hopperru-redis-data:
+  hopperru-clickhouse-data:
   ml-models:
 
 networks:
