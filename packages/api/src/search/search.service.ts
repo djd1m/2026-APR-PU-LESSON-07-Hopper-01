@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../common/redis.service';
 import { SearchFlightsDto, SearchCalendarDto } from './search.dto';
 import { TravelpayoutsService } from './travelpayouts.service';
+import { AmadeusService } from './amadeus.service';
 
 /** Approximate flight distances (km) between major Russian airports */
 const ROUTE_DISTANCES: Record<string, number> = {
@@ -74,6 +75,7 @@ export class SearchService {
   constructor(
     private readonly redis: RedisService,
     private readonly travelpayouts: TravelpayoutsService,
+    private readonly amadeus: AmadeusService,
   ) {}
 
   /**
@@ -94,10 +96,35 @@ export class SearchService {
       return parsed;
     }
 
-    // Try Travelpayouts API first, fall back to mock data
+    // Priority: Amadeus (full schedules) → Travelpayouts (prices) → Mock
     let flights: any[];
     let source = 'mock';
 
+    // 1. Try Amadeus — returns real flight schedules with actual prices
+    if (this.amadeus.isAvailable()) {
+      const amadeusFlights = await this.amadeus.searchFlights(
+        dto.origin,
+        dto.destination,
+        dto.departure_date,
+        dto.passengers || 1,
+        dto.cabin_class || 'ECONOMY',
+      );
+      if (amadeusFlights.length > 0) {
+        flights = amadeusFlights;
+        source = 'amadeus';
+        this.logger.log(`Using Amadeus: ${flights.length} real flights`);
+
+        const result: SearchResultResponse = {
+          flights,
+          metadata: { total: flights.length, cached: false, search_time_ms: Date.now() - startTime },
+        };
+        await this.redis.setex(cacheKey, 300, JSON.stringify(result)).catch(() => {});
+        return result;
+      }
+      this.logger.warn('Amadeus returned 0 results, trying Travelpayouts...');
+    }
+
+    // 2. Try Travelpayouts — returns best price, supplemented with estimates
     if (this.travelpayouts.isAvailable()) {
       const tpFlights = await this.travelpayouts.searchFlights(
         dto.origin,
