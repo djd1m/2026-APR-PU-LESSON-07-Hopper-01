@@ -67,6 +67,29 @@ export class WebPushService {
   }
 
   /**
+   * Unsubscribe a user from a specific push endpoint.
+   */
+  async unsubscribe(userId: string, endpoint: string): Promise<void> {
+    const existing = this.subscriptions.get(userId) || [];
+    const filtered = existing.filter((s) => s.endpoint !== endpoint);
+    if (filtered.length === 0) {
+      this.subscriptions.delete(userId);
+    } else {
+      this.subscriptions.set(userId, filtered);
+    }
+    this.logger.log(
+      `User ${userId} unsubscribed from push endpoint (${filtered.length} remaining)`,
+    );
+  }
+
+  /**
+   * Get the count of active subscriptions for a user.
+   */
+  getSubscriptionCount(userId: string): number {
+    return (this.subscriptions.get(userId) || []).length;
+  }
+
+  /**
    * Send a price alert push notification to a user.
    */
   async sendPriceAlert(userId: string, alert: PriceAlert): Promise<void> {
